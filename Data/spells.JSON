@@ -1,0 +1,27 @@
+{
+    "minor_heal": {
+        "id": 201,
+        "name": "Minor Heal",
+        "description": "A simple spell that restores a small amount of health to an ally.",
+        "tags": ["tier1", "holy", "healing"],
+        "costs": { "mana": 10 },
+        "action_string": "HEAL 1_ALLY CHOICE 20-30"
+    },
+    "fireball": {
+        "id": 202,
+        "name": "Fireball",
+        "description": "Hurl a ball of fire at all enemies.",
+        "tags": ["tier1", "fire", "offensive", "aoe"],
+        "costs": { "mana": 25 },
+        "action_string": "DAMAGE ALL_ENEMIES 2d10+INT FIRE"
+    },
+    "poison_sting": {
+        "id": 203,
+        "name": "Poison Sting",
+        "description": "Sting an enemy, poisoning them for several turns.",
+        "tags": ["tier1", "poison", "debuff"],
+        "costs": { "mana": 15 },
+        "action_string": "APPLY 1_ENEMY CHOICE POISON 3_TURNS"
+    }
+}
+

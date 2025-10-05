@@ -1,0 +1,27 @@
+{
+    "heavy_slam": {
+        "id": 101,
+        "name": "Heavy Slam",
+        "description": "A powerful blow that strikes a single foe.",
+        "tags": ["tier1", "physical", "offensive"],
+        "costs": { "stamina": 15 },
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*STR PHYSICAL"
+    },
+    "shield_wall": {
+        "id": 102,
+        "name": "Shield Wall",
+        "description": "Brace for impact, increasing your defense.",
+        "tags": ["tier1", "physical", "defensive"],
+        "costs": { "stamina": 10 },
+        "action_string": "BUFF SELF DEFENSE 10 2_TURNS"
+    },
+    "multi_shot": {
+        "id": 103,
+        "name": "Multi-Shot",
+        "description": "Fire a volley of arrows at multiple enemies.",
+        "tags": ["tier2", "physical", "offensive", "ranged"],
+        "costs": { "stamina": 20 },
+        "action_string": "DAMAGE 2_ENEMIES RANDOM 1d6+DEX PHYSICAL"
+    }
+}
+

@@ -1,0 +1,59 @@
+{
+    "game_settings": {
+        "next_event_choices": 2,
+        "mystery_choices": 1,
+        "boss_level_interval": 10,
+        "combat_round_time_units": 12500
+    },
+    "leveling_rate": {
+        "base_exp": 100,
+        "growth_formula": "base_exp * (1.1 ** (level - 1))"
+    },
+    "event_choice_distribution_weights": {
+        "regular_combat": 45,
+        "ordeal_combat": 15,
+        "normal_occurrence": 25,
+        "reward_occurrence": 10,
+        "rest_stop": 5
+    },
+    "mystery_event_choice_distribution_weights": {
+        "regular_combat": 45,
+        "ordeal_combat": 15,
+        "normal_occurrence": 25,
+        "reward_occurrence": 10,
+        "rest_stop": 5
+    },
+    "combat_configs_by_level": [
+        {
+            "min_level": 1,
+            "max_level": 5,
+            "regular_combat": {
+                "enemy_count_weights": { "1": 100 }
+            },
+            "ordeal_combat": {
+                "random_ordeal_weight": 60,
+                "preconstructed_ordeal_weight": 40,
+                "random_ordeal_composition": {
+                    "elite_count_weights": { "1": 100 },
+                    "normal_count_weights": { "0": 50, "1": 50 }
+                }
+            }
+        },
+        {
+            "min_level": 6,
+            "max_level": 15,
+            "regular_combat": {
+                "enemy_count_weights": { "1": 66, "2": 34 }
+            },
+            "ordeal_combat": {
+                "random_ordeal_weight": 60,
+                "preconstructed_ordeal_weight": 40,
+                "random_ordeal_composition": {
+                    "elite_count_weights": { "1": 100 },
+                    "normal_count_weights": { "0": 20, "1": 50, "2": 30 }
+                }
+            }
+        }
+    ]
+}
+

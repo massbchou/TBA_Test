@@ -1,0 +1,51 @@
+{
+    "goblin": {
+        "id": 1001, "name": "Goblin", "level": 1, "category": "Normal",
+        "tags": ["tier1", "normal_enemy", "humanoid", "goblin_kin"],
+        "stats": { "str": 8, "dex": 12, "max_health": 25, "speed": 130, "defense": 2, "exp_reward": 15 },
+        "abilities": [
+            { "ability_id": "heavy_slam", "cooldowns": {"self": 1} } 
+        ],
+        "loot_table": [
+            { "type": "gold", "chance": 0.8, "min_amount": 2, "max_amount": 8 },
+            { "type": "item", "item_id": 301, "chance": 0.1, "min_amount": 1, "max_amount": 1 }
+        ]
+    },
+    "orc_grunt": {
+        "id": 1002, "name": "Orc Grunt", "level": 2, "category": "Normal",
+        "tags": ["tier1", "normal_enemy", "humanoid", "orc_kin"],
+        "stats": { "str": 14, "dex": 8, "con": 14, "max_health": 40, "speed": 100, "defense": 4, "exp_reward": 30 },
+        "abilities": [
+             { "ability_id": "heavy_slam", "cooldowns": {"self": 0} }
+        ],
+        "loot_table": [
+            { "type": "gold", "chance": 0.9, "min_amount": 10, "max_amount": 20 }
+        ]
+    },
+    "goblin_shaman": {
+        "id": 1003, "name": "Goblin Shaman", "level": 4, "category": "Elite",
+        "tags": ["tier1", "elite_enemy", "humanoid", "goblin_kin", "caster"],
+        "stats": { "str": 8, "int": 14, "max_health": 45, "speed": 140, "defense": 3, "exp_reward": 75, "mana": 50 },
+        "abilities": [
+            { "ability_id": "heavy_slam", "cooldowns": {"self": 1} },
+            { "spell_id": "minor_heal", "cooldowns": {"self": 3} }
+        ],
+        "loot_table": [
+            { "type": "gold", "chance": 1.0, "min_amount": 20, "max_amount": 40 },
+            { "type": "item", "item_id": 302, "chance": 0.05, "min_amount": 1, "max_amount": 1 }
+        ]
+    },
+    "cave_troll": {
+        "id": 1004, "name": "Cave Troll", "level": 10, "category": "Boss",
+        "tags": ["tier1", "boss_enemy", "giant"],
+        "stats": { "str": 22, "con": 20, "max_health": 150, "speed": 90, "defense": 8, "exp_reward": 250 },
+        "abilities": [
+            { "ability_id": "heavy_slam", "cooldowns": {"self": 0} },
+            { "ability_id": "shield_wall", "cooldowns": {"self": 4, "heavy_slam": 1} }
+        ],
+        "loot_table": [
+            { "type": "gold", "chance": 1.0, "min_amount": 200, "max_amount": 300 }
+        ]
+    }
+}
+

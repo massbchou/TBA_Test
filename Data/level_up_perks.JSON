@@ -1,0 +1,24 @@
+{
+    "tier1": [
+        {
+            "perk_id": "toughness_1",
+            "name": "Toughness",
+            "description": "Increases Max Health by 20.",
+            "effect": {
+                "type": "stat_increase",
+                "stat": "max_health",
+                "value": 20
+            }
+        },
+        {
+            "perk_id": "strength_1",
+            "name": "Minor Strength",
+            "description": "Increases Strength by 2.",
+            "effect": {
+                "type": "stat_increase",
+                "stat": "str",
+                "value": 2
+            }
+        }
+    ]
+}

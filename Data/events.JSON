@@ -1,0 +1,52 @@
+{
+    "occurrences": {
+        "healing_spring": {
+            "id": 3001, "display_name": "A Healing Spring",
+            "description": "You find a serene spring. The water glows faintly.",
+            "tags": ["tier1", "occurrence", "reward"],
+            "choices": {
+                "Drink the water": { "type": "heal", "amount": 20, "result_text": "You feel refreshed and healed." },
+                "Leave it": { "type": "none", "result_text": "You decide not to risk it and move on." }
+            }
+        },
+        "strange_idol": {
+            "id": 3002, "display_name": "A Strange Idol",
+            "description": "You find a small, unsettling idol carved from black stone. It seems to whisper to you.",
+            "tags": ["tier1", "occurrence"],
+            "choices": {
+                "Pray to the idol.": {
+                    "description": "You kneel and offer a prayer. A chilling energy fills you, followed by a surge of power.",
+                    "result_text": "",
+                    "choices": {
+                        "Accept its dark gift (+2 STR, -10 Max HP)": {
+                             "type": "stat_change", "stat": "str", "value": 2, "stat2": "max_health", "value2": -10,
+                             "result_text": "You feel stronger, but a part of your vitality is drained away."
+                        },
+                        "Reject the power": {
+                            "type": "none",
+                            "result_text": "You recoil from the unnatural feeling and leave the idol behind."
+                        }
+                    }
+                },
+                "Smash the idol.": { "type": "none", "result_text": "You shatter the idol under your heel. The whispers cease." }
+            }
+        }
+    },
+    "preconstructed_ordeals": {
+        "goblin_chieftain_ambush": {
+            "id": 4001, "display_name": "Goblin Chieftain's Ambush",
+            "description": "A hulking goblin with a cruel-looking axe points at you. 'Get 'em, boys!'",
+            "tags": ["tier1", "ordeal"],
+            "enemies": ["goblin_shaman", "goblin", "goblin"]
+        }
+    },
+    "boss_events": {
+        "tier1_troll_lair": {
+            "id": 5001, "display_name": "Lair of the Troll",
+            "description": "The ground trembles as a massive Cave Troll emerges from the darkness!",
+            "tags": ["tier1", "boss_event"],
+            "enemies": ["cave_troll"]
+        }
+    }
+}
+
