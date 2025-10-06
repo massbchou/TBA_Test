@@ -1,0 +1,54 @@
+[
+  {
+    "id": "goblin_grunt",
+    "name": "Goblin Grunt",
+    "stats": {
+      "max_health": 20,
+      "strength": 5
+    },
+    "abilities": ["basic_attack"],
+    "loot_table": { "gold": { "min": 1, "max": 5 } },
+    "ai_scripts": [],
+    "category": "Normal",
+    "tags": ["tier1", "normal", "goblin"]
+  },
+  {
+    "id": "goblin_shaman",
+    "name": "Goblin Shaman",
+    "stats": {
+      "max_health": 15,
+      "strength": 3
+    },
+    "abilities": ["fire_bolt"],
+    "loot_table": { "gold": { "min": 3, "max": 8 } },
+    "ai_scripts": [],
+    "category": "Normal",
+    "tags": ["tier1", "tier2", "normal", "goblin", "magic"]
+  },
+  {
+    "id": "orc_berserker",
+    "name": "Orc Berserker",
+    "stats": {
+      "max_health": 50,
+      "strength": 12
+    },
+    "abilities": ["rampage"],
+    "loot_table": { "gold": { "min": 10, "max": 25 } },
+    "ai_scripts": [],
+    "category": "Elite",
+    "tags": ["tier2", "elite", "orc"]
+  },
+  {
+    "id": "dungeon_overlord",
+    "name": "Dungeon Overlord",
+    "stats": {
+      "max_health": 200,
+      "strength": 25
+    },
+    "abilities": ["crushing_blow", "dark_ritual"],
+    "loot_table": { "gold": { "min": 100, "max": 100 } },
+    "ai_scripts": [],
+    "category": "Boss",
+    "tags": ["boss"]
+  }
+]

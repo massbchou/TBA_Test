@@ -1,0 +1,24 @@
+[
+  {
+    "id": "generic_combat",
+    "type": "Combat",
+    "description": "You are attacked!",
+    "tags": ["any"]
+  },
+  {
+    "id": "generic_occurrence",
+    "type": "Occurrence",
+    "description": "You find a strange inscription on the wall.",
+    "choices": [
+      { "text": "Touch it.", "outcome": {} },
+      { "text": "Leave it alone.", "outcome": {} }
+    ],
+    "tags": ["any"]
+  },
+  {
+    "id": "generic_rest",
+    "type": "Rest",
+    "description": "You find a safe alcove to catch your breath.",
+    "tags": ["any"]
+  }
+]

@@ -55,7 +55,7 @@ The player character tracks two primary resources:
 ### **Technical Implementation Notes**
 
 * The Player class in player.py inherits from the base Character class and adds EXP, gold, and inventory management.  
-* The EXP-to-level formula is defined in settings.json (e.g., experience\_rate\_base, experience\_rate\_algorithm).  
+* The EXP-to-level formula is defined in settings.json as a string formula (e.g., `player.experience_to_level_formula: "100 * (1.1 ** (level - 1))"`).
 * The data for starting character options is stored in data/starting\_classes.json.  
 * The pool of potential level-up benefits is stored in data/level\_up\_perks.json.
 
@@ -111,10 +111,11 @@ Events are the core content of the game, divided into five Tiers by default, cor
 ### **Technical Implementation Notes**
 
 * The EventManager class (event\_manager.py) is the brain of this system.  
-* It uses weighted distributions defined in settings.json (event\_type\_distribution, combat\_composition\_by\_level, etc.) to generate event choices.  
+* It uses complex, nested weighted distributions defined in `settings.json` to generate event choices. This includes separate weightings for `regular` and `mystery` events (e.g., `events.distributions.regular.type_weights`).
+* It generates combat encounters based on level-tiered rules, which specify enemy tags and weighted enemy counts (e.g., `combat.encounter_generation.regular_combat_rules_by_tier`).
 * Odds are calculated from weights, not percentages that must sum to 1, for easier configuration.  
-* Event definitions are stored in data/events.json and are filtered using tags.  
-* The events.py file contains the Python classes that represent and execute the logic for each event type (e.g., CombatEvent, OccurrenceEvent).
+* Event definitions are stored in `data/events.json` and are filtered using tags.
+* The `events.py` file contains the Python classes that represent and execute the logic for each event type (e.g., CombatEvent, OccurrenceEvent), including subtypes for "Ordeal" and "Boss" encounters.
 
 ## **6\. Combat Mechanics**
 
