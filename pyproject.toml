@@ -1,11 +1,11 @@
 [project]
-name = "project-roguelike"
+name = "textrogue"
 version = "0.1.0"
 requires-python = ">=3.10"
-description = "A data-driven text-based roguelike adventure"
+description = "A data-driven, turn-based text adventure roguelike RPG engine"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
 
 [project.scripts]
-roguelike = "main:main"
+textrogue = "main:main"

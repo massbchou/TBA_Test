@@ -1,1 +1,1 @@
-"""Unit tests for Project Roguelike."""
+"""Unit tests for TextRogue."""

@@ -1,6 +1,6 @@
-# Project Roguelike (TBA_Test)
+# TextRogue
 
-A data-driven, turn-based text adventure RPG built in Python.
+A data-driven, turn-based text adventure roguelike RPG engine built in Python.
 
 ## Quick Start
 
@@ -19,7 +19,7 @@ pytest tests/ -v
 ## Directory Structure
 
 ```
-TBA_Test/
+textrogue/
 ├── pyproject.toml              # Project configuration and metadata
 ├── settings.json               # Balance, odds, formulas, and combat rules
 ├── README.md                   # This documentation

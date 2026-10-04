@@ -1,8 +1,8 @@
-# **Game Design Document: Project Roguelike**
+# **Game Design Document: TextRogue**
 
 ## **1\. High-Concept**
 
-Project Roguelike is a turn-based, text-based, single-player adventure game. The player progresses through an infinite series of procedurally generated levels, encountering random events, engaging in tactical combat, and continually upgrading their character. The core of the game is its deep data-driven architecture, allowing for complex and emergent interactions through a powerful custom action system.
+TextRogue is a turn-based, text-based, single-player adventure game. The player progresses through an infinite series of procedurally generated levels, encountering random events, engaging in tactical combat, and continually upgrading their character. The core of the game is its deep data-driven architecture, allowing for complex and emergent interactions through a powerful custom action system.
 
 ## **2\. Core Game Loop & Progression**
 

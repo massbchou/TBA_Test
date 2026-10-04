@@ -1,4 +1,4 @@
-"""Main game entry point for Project Roguelike."""
+"""Main game entry point for TextRogue."""
 from __future__ import annotations
 
 import sys
@@ -26,7 +26,7 @@ def select_starting_class(loader: DataLoader, default_class: str = "Warrior") ->
 def main() -> None:
     """Main game loop."""
     print("=" * 60)
-    print("           WELCOME TO PROJECT ROGUELIKE (TBA)           ")
+    print("                    WELCOME TO TEXTROGUE                    ")
     print("=" * 60)
 
     # 1. Load game configuration and content

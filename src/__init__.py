@@ -1,1 +1,1 @@
-"""Project Roguelike game package."""
+"""TextRogue game package."""
