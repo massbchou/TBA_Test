@@ -1,75 +1,78 @@
 """Action System Orchestrator.
 
-Parses and executes ability and spell actions defined by Action Strings or Predefined Actions.
-
-EXTENSION POINT (Goal 3):
-Implement the Lexer -> Parser -> Target Resolver -> Command Executor pipeline
-specified in docs/ActionSystem.md.
+Single entry point for executing any action: Action Strings run through the
+Lexer -> Parser -> Target Resolver -> Command Executor pipeline in
+``src.systems.actions``; Predefined Actions dispatch to registered Python
+functions. See docs/action_system.md.
 """
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
-from src.formula import evaluate_formula
-from src.utils import roll_dice
+from src.systems.actions.context import ActionResult, ExecutionContext
+from src.systems.actions.executor import run_program
+from src.systems.actions.nodes import Program
+from src.systems.actions.parser import parse_program
+from src.systems.actions.predefined import PREDEFINED
 
 if TYPE_CHECKING:
     from src.models.character import Character
-    from src.systems.combat import Combat
+    from src.systems.actions.definitions import ActionDef
+    from src.systems.battle import Battle
+
+logger = logging.getLogger("textrogue.actions")
 
 
 class ActionOrchestrator:
-    """Executes ability/spell effects via Action Strings or Predefined Actions."""
+    """Executes ActionDefs and ad-hoc action strings."""
 
     def __init__(self, data_loader: Any = None):
         self.data_loader = data_loader
+        self._cache: dict[str, Program] = {}
 
-    def execute(
-        self,
-        caster: Character,
-        action_data: dict[str, Any],
-        targets: list[Character],
-        combat_context: Combat | None = None,
-    ) -> dict[str, Any]:
+    def program_for(self, text: str, source: str = "") -> Program:
+        program = self._cache.get(text)
+        if program is None:
+            program = parse_program(text, source=source)
+            for diag in program.diagnostics:
+                logger.warning("%s", diag)
+            self._cache[text] = program
+        return program
+
+    def execute(self, caster: "Character", action: "ActionDef", battle: "Battle", log: bool = True) -> ActionResult:
+        """Executes an action and records it in the combat log.
+
+        Costs and cooldowns are the caller's responsibility (see Combat).
         """
-        Executes an action from an ability/spell dictionary.
-
-        Args:
-            caster: Character executing the action.
-            action_data: Ability or spell data dict (with action_string or predefined_action).
-            targets: Resolved target character(s).
-            combat_context: Active Combat instance for state/turn queries.
-
-        Returns:
-            Summary dict with execution results (e.g., {"damage_dealt": ..., "targets": ...}).
-        """
-        action_string = action_data.get("action_string", "")
-        action_name = action_data.get("name", "Unknown Action")
-
-        # Baseline execution until full Action DSL parser is implemented in Goal 3
-        results: dict[str, Any] = {
-            "action_name": action_name,
-            "caster": caster.name,
-            "effects": [],
-        }
-
-        if not targets:
-            return results
-
-        # Simple baseline parser for basic DAMAGE and HEAL lines
-        if "HEAL" in action_string:
-            heal_amount = int(caster.get_stat("int") + 10)
-            for target in targets:
-                healed = target.heal(heal_amount)
-                results["effects"].append({"target": target.name, "type": "heal", "amount": healed})
+        if action.predefined is not None:
+            name = action.predefined.get("name")
+            fn = PREDEFINED.get(name)
+            if fn is None:
+                logger.warning("Unknown predefined action %r on %s", name, action.id)
+                result = ActionResult(action.id, caster.name)
+            else:
+                result = fn(self, caster, action, battle, dict(action.predefined.get("params", {})))
         else:
-            # Baseline offensive damage based on caster's strength or int
-            stat_used = "int" if "int" in action_string.lower() else "str"
-            base_power = float(caster.get_stat(stat_used))
-            raw_damage = max(1, int(base_power * 1.2))
+            program = action.program or self.program_for(action.action_string or "", source=action.id)
+            result = self._run(caster, program, battle, action)
+        if log:
+            battle.log.record(caster, action, result.affected)
+        return result
 
-            for target in targets:
-                dealt = target.take_damage(raw_damage)
-                results["effects"].append({"target": target.name, "type": "damage", "amount": dealt})
+    def execute_string(
+        self,
+        caster: "Character",
+        text: str,
+        battle: "Battle",
+        action: "ActionDef | None" = None,
+        source: str = "",
+    ) -> ActionResult:
+        """Runs an action string without logging it as a turn action (status hooks, predefined bodies)."""
+        return self._run(caster, self.program_for(text, source=source), battle, action)
 
-        return results
+    def _run(self, caster: "Character", program: Program, battle: "Battle", action: "ActionDef | None") -> ActionResult:
+        result = ActionResult(action.id if action else "", caster.name)
+        ctx = ExecutionContext(caster, battle, action, program, result)
+        run_program(ctx)
+        return result

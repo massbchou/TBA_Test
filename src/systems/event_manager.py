@@ -5,6 +5,7 @@ import random
 from typing import TYPE_CHECKING, Any
 
 from src.models.enemy import Enemy
+from src.rng import get_rng
 from src.systems.events import CombatEvent, Event, OccurrenceEvent, RestEvent
 from src.utils import weighted_choice
 
@@ -16,9 +17,10 @@ if TYPE_CHECKING:
 class EventManager:
     """Handles procedural generation of floor events based on level and configuration."""
 
-    def __init__(self, data_loader: DataLoader):
+    def __init__(self, data_loader: DataLoader, rng: random.Random | None = None):
         self.data_loader = data_loader
         self.settings = data_loader.settings
+        self.rng = rng or get_rng()
 
     def generate_choices(self, game_state: GameState) -> list[Event]:
         """Generates choices for the current floor."""
@@ -37,7 +39,7 @@ class EventManager:
         num_regular = events_cfg.get("next_event_choices", 2)
         reg_dist = events_cfg.get("distributions", {}).get("regular", {})
         for _ in range(num_regular):
-            event_type = weighted_choice(reg_dist) or "regular_combat"
+            event_type = weighted_choice(reg_dist, rng=self.rng) or "regular_combat"
             event = self._build_event(event_type, level, is_mystery=False)
             if event:
                 choices.append(event)
@@ -46,7 +48,7 @@ class EventManager:
         num_mystery = events_cfg.get("mystery_choices", 1)
         mys_dist = events_cfg.get("distributions", {}).get("mystery", {})
         for _ in range(num_mystery):
-            event_type = weighted_choice(mys_dist) or "regular_combat"
+            event_type = weighted_choice(mys_dist, rng=self.rng) or "regular_combat"
             event = self._build_event(event_type, level, is_mystery=True)
             if event:
                 choices.append(event)
@@ -82,14 +84,13 @@ class EventManager:
         if rules and "regular_combat" in rules:
             count_weights = rules["regular_combat"].get("enemy_count_weights", count_weights)
 
-        num_enemies = int(weighted_choice(count_weights) or 1)
+        num_enemies = int(weighted_choice(count_weights, rng=self.rng) or 1)
 
-        tier_tag = f"tier{(level - 1) // 5 + 1}"
         candidates = self.data_loader.filter_enemies(categories=["Normal"])
         if not candidates:
             candidates = list(self.data_loader.enemies.keys())
 
-        chosen_slugs = random.choices(candidates, k=num_enemies)
+        chosen_slugs = self.rng.choices(candidates, k=num_enemies)
         encounter = [self.data_loader.build_enemy(slug) for slug in chosen_slugs]
         names = ", ".join(e.name for e in encounter)
 
@@ -110,12 +111,12 @@ class EventManager:
         random_weight = ordeal_rules.get("random_ordeal_weight", 60)
 
         use_preconstructed = (
-            weighted_choice({"preconstructed": preconstructed_weight, "random": random_weight}) == "preconstructed"
+            weighted_choice({"preconstructed": preconstructed_weight, "random": random_weight}, rng=self.rng) == "preconstructed"
         )
 
         preconstructed_dict = self.data_loader.events.get("preconstructed_ordeals", {})
         if use_preconstructed and preconstructed_dict:
-            ordeal_key, ordeal_data = random.choice(list(preconstructed_dict.items()))
+            ordeal_key, ordeal_data = self.rng.choice(list(preconstructed_dict.items()))
             encounter = [self.data_loader.build_enemy(slug) for slug in ordeal_data.get("enemies", [])]
             return CombatEvent(
                 event_id=ordeal_key,
@@ -131,8 +132,8 @@ class EventManager:
         elite_weights = comp.get("elite_count_weights", {"1": 100})
         normal_weights = comp.get("normal_count_weights", {"1": 50, "0": 50})
 
-        num_elites = int(weighted_choice(elite_weights) or 1)
-        num_normals = int(weighted_choice(normal_weights) or 0)
+        num_elites = int(weighted_choice(elite_weights, rng=self.rng) or 1)
+        num_normals = int(weighted_choice(normal_weights, rng=self.rng) or 0)
 
         elite_candidates = self.data_loader.filter_enemies(categories=["Elite"])
         if not elite_candidates:
@@ -142,10 +143,10 @@ class EventManager:
 
         encounter: list[Enemy] = []
         if elite_candidates:
-            for slug in random.choices(elite_candidates, k=num_elites):
+            for slug in self.rng.choices(elite_candidates, k=num_elites):
                 encounter.append(self.data_loader.build_enemy(slug))
         if normal_candidates and num_normals > 0:
-            for slug in random.choices(normal_candidates, k=num_normals):
+            for slug in self.rng.choices(normal_candidates, k=num_normals):
                 encounter.append(self.data_loader.build_enemy(slug))
 
         names = ", ".join(e.name for e in encounter)
@@ -173,7 +174,7 @@ class EventManager:
             matched = list(occurrences.items())
 
         if matched:
-            key, occ_data = random.choice(matched)
+            key, occ_data = self.rng.choice(matched)
             return OccurrenceEvent(
                 event_id=key,
                 display_name=occ_data.get("display_name", "Curious Scene"),
@@ -195,7 +196,7 @@ class EventManager:
     def _generate_boss_event(self, level: int) -> CombatEvent:
         boss_events = self.data_loader.events.get("boss_events", {})
         if boss_events:
-            key, bdata = random.choice(list(boss_events.items()))
+            key, bdata = self.rng.choice(list(boss_events.items()))
             encounter = [self.data_loader.build_enemy(slug) for slug in bdata.get("enemies", [])]
             return CombatEvent(
                 event_id=key,
@@ -210,7 +211,7 @@ class EventManager:
         if not boss_candidates:
             boss_candidates = list(self.data_loader.enemies.keys())
 
-        slug = random.choice(boss_candidates)
+        slug = self.rng.choice(boss_candidates)
         boss = self.data_loader.build_enemy(slug)
         return CombatEvent(
             event_id=f"boss_{slug}",

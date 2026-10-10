@@ -2,7 +2,7 @@
 import unittest
 from src.models.player import Player
 from src.models.enemy import Enemy
-from src.systems.combat import Combat
+from src.systems.combat import Combat, CombatResult
 
 
 class TestCombatTurnOrder(unittest.TestCase):
@@ -58,7 +58,7 @@ class TestCombatTurnOrder(unittest.TestCase):
         combat = Combat(player=player, settings=self.settings)
         result = combat.run([enemy])
 
-        self.assertTrue(result)
+        self.assertIs(result, CombatResult.VICTORY)
         self.assertFalse(enemy.is_alive())
         self.assertTrue(player.is_alive())
 

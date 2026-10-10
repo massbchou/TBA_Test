@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.systems.effects import apply_effects
+
 if TYPE_CHECKING:
     from src.game_state import GameState
     from src.models.enemy import Enemy
@@ -63,8 +65,10 @@ class CombatEvent(Event):
         self.encounter = encounter
 
     def execute(self, game_state: GameState, combat_system: Combat) -> bool:
+        from src.systems.combat import CombatResult
+
         print(f"\n{self.description}")
-        return combat_system.run(self.encounter)
+        return combat_system.run(self.encounter, subtype=self.subtype) is not CombatResult.DEFEAT
 
 
 class OccurrenceEvent(Event):
@@ -97,32 +101,26 @@ class OccurrenceEvent(Event):
             print("You search around, but find nothing of note. Moving on...")
             return True
 
-        choices_list = list(self.choices.items())
-        print("\nWhat do you do?")
-        for i, (choice_text, _) in enumerate(choices_list, start=1):
-            print(f"  [{i}] {choice_text}")
+        self._resolve(self.choices, game_state, combat_system)
+        return True
 
-        # Choose option 1 by default if interactive loop isn't handling input
-        chosen_text, choice_data = choices_list[0]
+    def _resolve(self, choices: dict[str, Any], game_state: GameState, combat_system: Combat) -> None:
+        """Prompts for a choice, recursing into nested choices, then applies its effects."""
+        labels = list(choices)
+        chosen_text = labels[combat_system.input.choose("What do you do?", labels)]
+        choice_data = choices[chosen_text]
         print(f"\nYou choose: {chosen_text}")
 
-        choice_type = choice_data.get("type")
-        if choice_type == "heal":
-            amount = choice_data.get("amount", 20)
-            healed = game_state.player.heal(amount)
-            print(f"You recovered {healed} HP! (Current: {game_state.player.health}/{game_state.player.get_stat('max_health')})")
-        elif choice_type == "stat_change":
-            stat = choice_data.get("stat")
-            val = choice_data.get("value", 0)
-            if stat:
-                game_state.player.stats[stat] = game_state.player.stats.get(stat, 0) + val
-                print(f"Your {stat} changed by {val:+d}!")
+        if choice_data.get("description"):
+            print(choice_data["description"])
+        if "choices" in choice_data:
+            self._resolve(choice_data["choices"], game_state, combat_system)
+            return
 
-        result_text = choice_data.get("result_text")
-        if result_text:
-            print(result_text)
-
-        return True
+        for msg in apply_effects(game_state.player, choice_data.get("effects", []), combat_system.data_loader):
+            print(msg)
+        if choice_data.get("result_text"):
+            print(choice_data["result_text"])
 
 
 class RestEvent(Event):
@@ -149,7 +147,10 @@ class RestEvent(Event):
         print(self.description)
         player = game_state.player
         max_hp = int(player.get_stat("max_health"))
-        heal_amount = max(1, int(max_hp * 0.5))
-        healed = player.heal(heal_amount)
+        fraction = game_state.settings.get("combat", {}).get("rest_heal_fraction", 0.5)
+        healed = player.heal(max(1, int(max_hp * fraction)))
+        player.refill_resources()
         print(f"You rest by the warm coals and recover {healed} HP. (Current HP: {player.health}/{max_hp})")
+        if player.resources:
+            print("Your stamina and mana are fully restored.")
         return True
