@@ -1,0 +1,96 @@
+{
+  "player": {
+    "exp_formula": "base_exp * (1.1 ** (level - 1))",
+    "exp_base": 100,
+    "level_up_perk_choices": 3,
+    "derived_stats": {
+      "max_stamina": "40 + 5 * (con - 10)",
+      "max_mana": "20 + 5 * (int - 10)"
+    }
+  },
+  "events": {
+    "next_event_choices": 2,
+    "mystery_choices": 1,
+    "boss_level_interval": 10,
+    "distributions": {
+      "regular": {
+        "regular_combat": 45,
+        "ordeal_combat": 15,
+        "normal_occurrence": 25,
+        "reward_occurrence": 10,
+        "rest_stop": 5
+      },
+      "mystery": {
+        "regular_combat": 45,
+        "ordeal_combat": 15,
+        "normal_occurrence": 25,
+        "reward_occurrence": 10,
+        "rest_stop": 5
+      }
+    }
+  },
+  "combat": {
+    "round_time_units": 12500,
+    "reference_speed": 125,
+    "stamina_regen_per_turn": 5,
+    "defend_formula": "5+CON/2",
+    "run": {
+      "base_chance": 50,
+      "speed_factor": 0.5,
+      "min_chance": 10,
+      "max_chance": 90,
+      "disallowed_subtypes": [
+        "Boss"
+      ]
+    },
+    "rest_heal_fraction": 0.5,
+    "rules_by_level_range": [
+      {
+        "min_level": 1,
+        "max_level": 5,
+        "regular_combat": {
+          "enemy_count_weights": {
+            "1": 100
+          }
+        },
+        "ordeal_combat": {
+          "random_ordeal_weight": 60,
+          "preconstructed_ordeal_weight": 40,
+          "random_composition": {
+            "elite_count_weights": {
+              "1": 100
+            },
+            "normal_count_weights": {
+              "0": 50,
+              "1": 50
+            }
+          }
+        }
+      },
+      {
+        "min_level": 6,
+        "max_level": 15,
+        "regular_combat": {
+          "enemy_count_weights": {
+            "1": 66,
+            "2": 34
+          }
+        },
+        "ordeal_combat": {
+          "random_ordeal_weight": 60,
+          "preconstructed_ordeal_weight": 40,
+          "random_composition": {
+            "elite_count_weights": {
+              "1": 100
+            },
+            "normal_count_weights": {
+              "0": 20,
+              "1": 50,
+              "2": 30
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -4,13 +4,12 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 
-from src.data_loader import DataLoader
 from src.game_state import GameState
 from src.io.input_provider import ScriptedInput
 from src.systems.combat import Combat
 from src.systems.events import OccurrenceEvent, RestEvent
 from src.systems.perks import PerkManager, tier_for_level
-from tests.helpers import make_enemy, make_player
+from tests.helpers import fixture_loader, make_enemy, make_player
 
 PERKS = {
     "tier1": [
@@ -65,8 +64,7 @@ class TestPerks(unittest.TestCase):
 class TestOccurrences(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.loader = DataLoader()
-        cls.loader.load_all()
+        cls.loader = fixture_loader()
 
     def run_event(self, event, player, answers):
         combat = Combat(player, self.loader.settings, self.loader, input_provider=ScriptedInput(answers),

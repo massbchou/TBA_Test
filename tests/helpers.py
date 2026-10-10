@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import random
+from pathlib import Path
 from typing import Any, Sequence
 
+from src.data_loader import DataLoader
 from src.io.input_provider import ScriptedInput
 from src.models.enemy import Enemy
 from src.models.player import Player
@@ -11,6 +13,16 @@ from src.models.status import StatusDef
 from src.systems.actions.context import ActionResult
 from src.systems.actions.definitions import ActionDef
 from src.systems.battle import Battle
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def fixture_loader() -> DataLoader:
+    """A loader over the frozen test content in tests/fixtures, independent of shipped game data."""
+    loader = DataLoader(data_dir=FIXTURES / "data", settings_path=FIXTURES / "settings.json")
+    loader.load_all()
+    return loader
+
 
 DERIVED = {"max_stamina": "40 + 5 * (con - 10)", "max_mana": "20 + 5 * (int - 10)"}
 

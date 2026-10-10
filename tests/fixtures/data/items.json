@@ -1,0 +1,34 @@
+{
+    "health_potion": {
+        "id": 301,
+        "name": "Health Potion",
+        "description": "A vial of soothing red liquid that restores 35 HP.",
+        "tags": ["consumable", "healing"],
+        "usable_in_combat": true,
+        "action_string": "HEAL SELF 35"
+    },
+    "fire_bomb": {
+        "id": 302,
+        "name": "Fire Bomb",
+        "description": "An incendiary flask dealing 25 Fire damage to all enemies.",
+        "tags": ["consumable", "fire", "offensive"],
+        "usable_in_combat": true,
+        "action_string": "DAMAGE ALL_ENEMIES 25 FIRE"
+    },
+    "stamina_tonic": {
+        "id": 303,
+        "name": "Stamina Tonic",
+        "description": "A bitter draught that restores 25 Stamina.",
+        "tags": ["consumable"],
+        "usable_in_combat": true,
+        "action_string": "RESTORE SELF STAMINA 25"
+    },
+    "antidote": {
+        "id": 304,
+        "name": "Antidote",
+        "description": "Cures poison.",
+        "tags": ["consumable", "cure"],
+        "usable_in_combat": true,
+        "action_string": "CLEANSE SELF POISON"
+    }
+}

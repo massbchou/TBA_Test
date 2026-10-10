@@ -1,6 +1,6 @@
 """Tests for DataLoader and model factories."""
 import unittest
-from src.data_loader import DataLoader
+from tests.helpers import fixture_loader
 from src.models.enemy import Enemy
 from src.models.player import Player
 
@@ -8,8 +8,7 @@ from src.models.player import Player
 class TestDataLoader(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.loader = DataLoader(data_dir="data", settings_path="settings.json")
-        cls.loader.load_all()
+        cls.loader = fixture_loader()
 
     def test_load_all_keys_populated(self):
         self.assertIn("player", self.loader.settings)

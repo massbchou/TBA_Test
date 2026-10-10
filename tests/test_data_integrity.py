@@ -5,6 +5,7 @@ from io import StringIO
 
 import main
 from src.data_loader import DataLoader
+from tests.helpers import fixture_loader
 
 
 class TestDataIntegrity(unittest.TestCase):
@@ -12,6 +13,10 @@ class TestDataIntegrity(unittest.TestCase):
         loader = DataLoader()
         loader.load_all()
         problems = [str(d) for d in loader.validate() if d.severity != "info"]
+        self.assertEqual(problems, [])
+
+    def test_fixture_data_has_no_errors_or_warnings(self):
+        problems = [str(d) for d in fixture_loader().validate() if d.severity != "info"]
         self.assertEqual(problems, [])
 
     def test_every_action_parsed(self):
