@@ -1,17 +1,43 @@
-"""Combat system with speed-based continuous-time turn resolution."""
+"""Combat system with speed-based continuous-time turn resolution.
+
+Turn lifecycle:
+  1. The living character with the lowest action_time acts (ties: higher speed,
+     then the player, then list order).
+  2. The clock advances to that time: clock-based timers expire and
+     ROUNDS / TIME_UNITS delays fire.
+  3. Start of turn: due TURNS delays fire, then on_turn_start status hooks.
+  4. The actor acts (player menu or AI).
+  5. End of turn: TURNS timers tick, stamina regenerates, on_turn_end hooks run.
+  6. action_time += round_time_units // speed.
+"""
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Callable
 
-from src.models.character import Character
+from src.io.input_provider import AutoInput, InputProvider
+from src.rng import get_rng
 from src.systems.action_orchestrator import ActionOrchestrator
+from src.systems.actions.definitions import SOURCE_ITEM, SOURCE_SPELL, SOURCE_TECHNIQUE, ActionDef, ActionRegistry
 from src.systems.ai_controller import AIController
+from src.systems.battle import Battle
 
 if TYPE_CHECKING:
     from src.data_loader import DataLoader
+    from src.models.character import Character
     from src.models.enemy import Enemy
     from src.models.player import Player
+    from src.systems.perks import PerkManager
+
+MAX_TURNS = 500
+PLAYER_MENU = ["Attack", "Defend", "Technique", "Cast", "Bag", "Run"]
+
+
+class CombatResult(Enum):
+    VICTORY = "victory"
+    DEFEAT = "defeat"
+    FLED = "fled"
 
 
 class Combat:
@@ -24,130 +50,236 @@ class Combat:
         data_loader: DataLoader | None = None,
         action_orchestrator: ActionOrchestrator | None = None,
         ai_controller: AIController | None = None,
+        input_provider: InputProvider | None = None,
+        rng: random.Random | None = None,
+        narrator: Callable[[str], None] = print,
+        perk_manager: PerkManager | None = None,
     ):
         self.player = player
         self.settings = settings
         self.data_loader = data_loader
-        self.round_time_units = int(
-            self.settings.get("combat", {}).get("round_time_units", 12500)
-        )
+        combat_cfg = self.settings.get("combat", {})
+        self.round_time_units = int(combat_cfg.get("round_time_units", 12500))
+        self.stamina_regen = int(combat_cfg.get("stamina_regen_per_turn", 0))
+        self.actions: ActionRegistry = data_loader.actions if data_loader else ActionRegistry.build()
         self.action_orchestrator = action_orchestrator or ActionOrchestrator(data_loader)
-        self.ai_controller = ai_controller or AIController(data_loader)
+        self.ai_controller = ai_controller or AIController(data_loader, actions=self.actions)
+        self.input = input_provider or AutoInput()
+        self.rng = rng or get_rng()
+        self.narrate = narrator
+        self.perk_manager = perk_manager
         self.enemies: list[Enemy] = []
+        self.battle: Battle | None = None
 
-    def run(self, encounter: list[Enemy]) -> bool:
-        """
-        Executes a combat encounter until player victory or defeat.
+    # --------------------------------------------------------------- loop
 
-        Returns:
-            True on victory, False on defeat.
-        """
+    def run(self, encounter: list[Enemy], subtype: str = "Regular") -> CombatResult:
+        """Executes a combat encounter until victory, defeat, or escape."""
         self.enemies = encounter
-        participants: list[Character] = [self.player] + self.enemies
+        disallowed = self.settings.get("combat", {}).get("run", {}).get("disallowed_subtypes", ["Boss"])
+        battle = Battle(
+            self.player,
+            self.enemies,
+            orchestrator=self.action_orchestrator,
+            rng=self.rng,
+            input_provider=self.input,
+            statuses=self.data_loader.status_defs if self.data_loader else {},
+            settings=self.settings,
+            narrator=self.narrate,
+            allow_run=subtype not in disallowed,
+        )
+        self.battle = battle
 
-        print("\n================== COMBAT STARTS ==================")
-        print(f"Hero: {self.player.name} (HP: {self.player.health}/{self.player.get_stat('max_health')}, Speed: {self.player.get_stat('speed')})")
+        self.narrate("\n================== COMBAT STARTS ==================")
+        self.narrate(f"Hero: {self.player.name} (HP: {self.player.health}/{self.player.get_stat('max_health')}, Speed: {self.player.get_stat('speed')})")
         for enemy in self.enemies:
-            print(f"Enemy: {enemy.name} (HP: {enemy.health}/{enemy.get_stat('max_health')}, Speed: {enemy.get_stat('speed')})")
+            self.narrate(f"Enemy: {enemy.name} (HP: {enemy.health}/{enemy.get_stat('max_health')}, Speed: {enemy.get_stat('speed')})")
 
-        # Initialize action timers
-        for p in participants:
+        for p in battle.participants:
             p.action_time = 0
+            p.turn_count = 0
 
-        round_counter = 1
-
-        while self.player.is_alive() and any(e.is_alive() for e in self.enemies):
-            living = [p for p in participants if p.is_alive()]
-            # Actor with lowest action_time takes the turn
-            actor = min(living, key=lambda p: p.action_time)
-
-            if actor is self.player:
-                self._process_player_turn()
-            else:
-                self._process_enemy_turn(actor)  # type: ignore[arg-type]
-
-            # Advance actor's action timer based on speed
-            speed = max(1, int(actor.get_stat("speed") or 100))
-            cost = max(1, self.round_time_units // speed)
-            actor.action_time += cost
-
-            round_counter += 1
-            if round_counter > 500:
-                print("Combat reached maximum rounds safeguard.")
+        turns = 0
+        while not battle.is_over():
+            actor = self._next_actor(battle)
+            battle.advance_clock(actor.action_time)
+            if battle.is_over():
                 break
+            if not actor.is_alive():
+                continue
 
-        if self.player.is_alive():
-            print("\n>>> VICTORY! All enemies have been defeated! <<<")
+            battle.start_turn(actor)
+            if actor.is_alive() and not battle.is_over():
+                if actor is self.player:
+                    self._process_player_turn(battle)
+                else:
+                    self._process_enemy_turn(actor, battle)  # type: ignore[arg-type]
+            if actor.is_alive() and self.stamina_regen:
+                actor.restore_resource("stamina", self.stamina_regen)
+            battle.end_turn(actor)
+
+            speed = max(1, int(actor.get_stat("speed") or 1))
+            actor.action_time += max(1, self.round_time_units // speed)
+
+            turns += 1
+            if turns >= MAX_TURNS:
+                self.narrate("The battle drags on endlessly... both sides withdraw.")
+                battle.fled = True
+
+        result = self._result(battle)
+        for char in battle.participants:
+            char.clear_combat_state()
+        battle.scheduler.clear()
+
+        if result is CombatResult.VICTORY:
+            self.narrate("\n>>> VICTORY! All enemies have been defeated! <<<")
             self._process_post_combat_rewards()
-            return True
+        elif result is CombatResult.FLED:
+            self.narrate("\n>>> You escaped the battle. <<<")
         else:
-            print("\n>>> DEFEAT! You have fallen in battle... <<<")
-            return False
+            self.narrate("\n>>> DEFEAT! You have fallen in battle... <<<")
+        return result
 
-    def _process_player_turn(self) -> None:
-        """Executes a player action against living enemies."""
-        living_enemies = [e for e in self.enemies if e.is_alive()]
-        if not living_enemies:
-            return
+    def _result(self, battle: Battle) -> CombatResult:
+        if not self.player.is_alive():
+            return CombatResult.DEFEAT
+        if battle.fled:
+            return CombatResult.FLED
+        return CombatResult.VICTORY
 
-        # Target the lowest health enemy
-        target = min(living_enemies, key=lambda e: e.health)
-
-        action_data = {
-            "name": "Standard Strike",
-            "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*STR PHYSICAL",
-        }
-        res = self.action_orchestrator.execute(
-            caster=self.player,
-            action_data=action_data,
-            targets=[target],
-            combat_context=self,
+    @staticmethod
+    def _next_actor(battle: Battle) -> Character:
+        living = [(i, c) for i, c in enumerate(battle.participants) if c.is_alive()]
+        _, actor = min(
+            living,
+            key=lambda pair: (
+                pair[1].action_time,
+                -pair[1].get_stat("speed"),
+                0 if battle.is_player(pair[1]) else 1,
+                pair[0],
+            ),
         )
+        return actor
 
-        for eff in res.get("effects", []):
-            print(f"  -> You strike {eff['target']} for {eff['amount']} damage! ({target.health}/{target.get_stat('max_health')} HP left)")
+    # ------------------------------------------------------------- player
 
-    def _process_enemy_turn(self, enemy: Enemy) -> None:
+    def _status_line(self, char: Character) -> str:
+        parts = [f"HP {char.health}/{int(char.get_stat('max_health'))}"]
+        for name, res in char.resources.items():
+            parts.append(f"{name.upper()} {res.current}/{res.maximum}")
+        if char.statuses:
+            parts.append("[" + ", ".join(s.name for s in char.statuses) + "]")
+        return f"{char.name}: " + " | ".join(parts)
+
+    def _process_player_turn(self, battle: Battle) -> None:
+        """Shows the six-action menu and executes the chosen action."""
+        player = self.player
+        self.narrate("\n" + self._status_line(player))
+        for enemy in battle.enemies_of(player):
+            self.narrate("  vs " + self._status_line(enemy))
+
+        action: ActionDef | None = None
+        while action is None:
+            choice = PLAYER_MENU[self.input.choose("Your move:", PLAYER_MENU)]
+            if choice == "Attack":
+                action = self.actions["attack"]
+            elif choice == "Defend":
+                action = self.actions["defend"]
+            elif choice == "Technique":
+                action = self._pick_action("Technique", player.abilities, SOURCE_TECHNIQUE)
+            elif choice == "Cast":
+                action = self._pick_action("Spell", player.spells, SOURCE_SPELL)
+            elif choice == "Bag":
+                action = self._pick_item()
+            elif choice == "Run":
+                if battle.allow_run:
+                    action = self.actions["run"]
+                else:
+                    self.narrate("There is no escape from this fight!")
+
+        if action.source == SOURCE_ITEM:
+            player.remove_item(action.id)
+        else:
+            player.pay(action.costs)
+        self.narrate(f"> {player.name} uses {action.name}!")
+        self.action_orchestrator.execute(player, action, battle)
+
+    def _pick_action(self, label: str, known: list[str], source: str) -> ActionDef | None:
+        options = [a for a in (self.actions.get(aid) for aid in known) if a is not None and a.source == source]
+        if not options:
+            self.narrate(f"You don't know any {label.lower()}s.")
+            return None
+        labels = []
+        for a in options:
+            cost = ", ".join(f"{v} {k}" for k, v in a.costs.items()) or "free"
+            short = "" if self.player.can_afford(a.costs) else "  (not enough resources)"
+            labels.append(f"{a.name} ({cost}){short}")
+        idx = self.input.choose(f"Choose a {label.lower()}:", labels + ["Back"])
+        if idx == len(options):
+            return None
+        chosen = options[idx]
+        if not self.player.can_afford(chosen.costs):
+            self.narrate(f"You can't afford {chosen.name} right now.")
+            return None
+        return chosen
+
+    def _pick_item(self) -> ActionDef | None:
+        stacks = [
+            (self.actions[item_id], qty)
+            for item_id, qty in self.player.inventory.items()
+            if item_id in self.actions and self.actions[item_id].usable_in_combat and qty > 0
+        ]
+        if not stacks:
+            self.narrate("Your bag has nothing usable in combat.")
+            return None
+        labels = [f"{a.name} x{qty} - {a.description}" for a, qty in stacks]
+        idx = self.input.choose("Use which item?", labels + ["Back"])
+        return None if idx == len(stacks) else stacks[idx][0]
+
+    # -------------------------------------------------------------- enemy
+
+    def _process_enemy_turn(self, enemy: Enemy, battle: Battle) -> None:
         """Executes an enemy turn via AIController."""
-        action = self.ai_controller.decide_action(enemy, self)
-        if not action:
+        action = self.ai_controller.decide_action(enemy, battle)
+        if action is None:
+            self.narrate(f"< {enemy.name} waits, gathering its strength.")
             return
+        self.narrate(f"< {enemy.name} uses {action.name}!")
+        self.action_orchestrator.execute(enemy, action, battle)
+        enemy.trigger_cooldowns(action.id)
 
-        res = self.action_orchestrator.execute(
-            caster=enemy,
-            action_data=action,
-            targets=[self.player],
-            combat_context=self,
-        )
-
-        for eff in res.get("effects", []):
-            if eff.get("type") == "damage":
-                print(f"  <- {enemy.name} uses [{action.get('name')}] on you for {eff['amount']} damage! (Your HP: {self.player.health}/{self.player.get_stat('max_health')})")
-            elif eff.get("type") == "heal":
-                print(f"  <- {enemy.name} heals for {eff['amount']} HP!")
+    # ------------------------------------------------------------ rewards
 
     def _process_post_combat_rewards(self) -> None:
-        """Distributes EXP and loot to the player."""
+        """Distributes EXP, gold and item loot, then offers perks for each level gained."""
         total_exp = 0
         total_gold = 0
+        items: dict[str, int] = {}
 
         for enemy in self.enemies:
             total_exp += int(enemy.get_stat("exp_reward") or (enemy.level * 20))
             for loot in enemy.loot_table:
+                if self.rng.random() > loot.get("chance", 1.0):
+                    continue
+                amount = self.rng.randint(loot.get("min_amount", 1), loot.get("max_amount", 1))
                 if loot.get("type") == "gold":
-                    chance = loot.get("chance", 1.0)
-                    if random.random() <= chance:
-                        gold_min = loot.get("min_amount", 1)
-                        gold_max = loot.get("max_amount", 5)
-                        total_gold += random.randint(gold_min, gold_max)
+                    total_gold += amount
+                elif loot.get("type") == "item" and loot.get("item_id"):
+                    items[loot["item_id"]] = items.get(loot["item_id"], 0) + amount
 
         self.player.gold += total_gold
-        print(f"Loot acquired: {total_gold} Gold! (Total Gold: {self.player.gold})")
+        self.narrate(f"Loot acquired: {total_gold} Gold! (Total Gold: {self.player.gold})")
+        for item_id, qty in items.items():
+            self.player.add_item(item_id, qty)
+            name = self.actions[item_id].name if item_id in self.actions else item_id
+            self.narrate(f"Found {name} x{qty}!")
 
         exp_formula = self.settings.get("player", {}).get("exp_formula", "100")
         exp_base = self.settings.get("player", {}).get("exp_base", 100)
         leveled = self.player.add_exp(total_exp, exp_formula, exp_base)
 
-        print(f"Gained {total_exp} EXP! (Current EXP: {self.player.exp}/{self.player.exp_to_next_level})")
+        self.narrate(f"Gained {total_exp} EXP! (Current EXP: {self.player.exp}/{self.player.exp_to_next_level})")
         for lvl in leveled:
-            print(f"*** LEVEL UP! You reached Level {lvl}! ***")
+            self.narrate(f"*** LEVEL UP! You reached Level {lvl}! ***")
+            if self.perk_manager is not None:
+                self.perk_manager.offer(self.player, lvl)

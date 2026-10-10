@@ -10,8 +10,9 @@ T = TypeVar("T")
 DICE_PATTERN = re.compile(r"^(\d+)d(\d+)(?:([+-])(\d+))?$")
 
 
-def weighted_choice(choices_dict: dict[T, float | int]) -> T | None:
+def weighted_choice(choices_dict: dict[T, float | int], rng: random.Random | None = None) -> T | None:
     """Selects an item based on weights. Returns None if choices_dict is empty or total weight <= 0."""
+    rng = rng or random
     if not choices_dict:
         return None
 
@@ -19,7 +20,7 @@ def weighted_choice(choices_dict: dict[T, float | int]) -> T | None:
     if total_weight <= 0:
         return None
 
-    rand_val = random.uniform(0, total_weight)
+    rand_val = rng.uniform(0, total_weight)
     cumulative = 0.0
 
     for choice, weight in choices_dict.items():
@@ -36,11 +37,12 @@ def weighted_choice(choices_dict: dict[T, float | int]) -> T | None:
     return None
 
 
-def roll_dice(dice_str: str) -> int:
+def roll_dice(dice_str: str, rng: random.Random | None = None) -> int:
     """
     Parses and rolls dice strings like '2d10', '1d6+3', or '3d8-2'.
     If the string is just an integer, returns the integer value.
     """
+    rng = rng or random
     dice_str = dice_str.strip()
     if dice_str.isdigit():
         return int(dice_str)
@@ -54,7 +56,7 @@ def roll_dice(dice_str: str) -> int:
     sign = match.group(3)
     mod = int(match.group(4)) if match.group(4) else 0
 
-    total = sum(random.randint(1, sides) for _ in range(num_dice))
+    total = sum(rng.randint(1, sides) for _ in range(num_dice))
     if sign == "+":
         total += mod
     elif sign == "-":

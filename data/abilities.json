@@ -4,7 +4,7 @@
         "name": "Heavy Slam",
         "description": "A powerful blow that strikes a single foe.",
         "tags": ["tier1", "physical", "offensive"],
-        "costs": { "stamina": 15 },
+        "costs": {"stamina": 15},
         "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*STR PHYSICAL"
     },
     "shield_wall": {
@@ -12,7 +12,7 @@
         "name": "Shield Wall",
         "description": "Brace for impact, increasing your defense.",
         "tags": ["tier1", "physical", "defensive"],
-        "costs": { "stamina": 10 },
+        "costs": {"stamina": 10},
         "action_string": "BUFF SELF DEFENSE 10 2_TURNS"
     },
     "multi_shot": {
@@ -20,8 +20,23 @@
         "name": "Multi-Shot",
         "description": "Fire a volley of arrows at multiple enemies.",
         "tags": ["tier2", "physical", "offensive", "ranged"],
-        "costs": { "stamina": 20 },
+        "costs": {"stamina": 20},
         "action_string": "DAMAGE 2_ENEMIES RANDOM 1d6+DEX PHYSICAL"
+    },
+    "quick_jab": {
+        "id": 104,
+        "name": "Quick Jab",
+        "description": "A fast, precise strike that scales with Dexterity.",
+        "tags": ["tier1", "physical", "offensive"],
+        "costs": {"stamina": 5},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 0.8*DEX PHYSICAL"
+    },
+    "smoke_screen": {
+        "id": 105,
+        "name": "Smoke Screen",
+        "description": "Blind your foes with smoke, slowing them for 2 turns.",
+        "tags": ["tier1", "debuff"],
+        "costs": {"stamina": 15},
+        "action_string": "DEBUFF ALL_ENEMIES SPEED 30 2_TURNS"
     }
 }
-

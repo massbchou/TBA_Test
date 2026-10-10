@@ -4,21 +4,36 @@
             "perk_id": "toughness_1",
             "name": "Toughness",
             "description": "Increases Max Health by 20.",
-            "effect": {
-                "type": "stat_increase",
-                "stat": "max_health",
-                "value": 20
-            }
+            "effect": {"type": "stat_change", "stat": "max_health", "value": 20},
+            "repeatable": true
         },
         {
             "perk_id": "strength_1",
             "name": "Minor Strength",
             "description": "Increases Strength by 2.",
-            "effect": {
-                "type": "stat_increase",
-                "stat": "str",
-                "value": 2
-            }
+            "effect": {"type": "stat_change", "stat": "str", "value": 2},
+            "repeatable": true
+        },
+        {
+            "perk_id": "endurance_1",
+            "name": "Endurance",
+            "description": "Increases Constitution by 2 (more Stamina).",
+            "repeatable": true,
+            "effect": {"type": "stat_change", "stat": "con", "value": 2}
+        },
+        {
+            "perk_id": "arcane_1",
+            "name": "Arcane Study",
+            "description": "Increases Intelligence by 2 (more Mana).",
+            "repeatable": true,
+            "effect": {"type": "stat_change", "stat": "int", "value": 2}
+        },
+        {
+            "perk_id": "fleet_foot_1",
+            "name": "Fleet Foot",
+            "description": "Increases Speed by 10. Can only be taken once.",
+            "repeatable": false,
+            "effect": {"type": "stat_change", "stat": "speed", "value": 10}
         }
     ]
 }

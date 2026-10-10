@@ -119,3 +119,25 @@ Cooldown Management:
 A monster tries to use its powerful breath weapon if it's available; otherwise, it uses a basic claw attack.
 
 * IF ABILITY dragon\_breath IS\_READY { use\_ability dragon\_breath } ELSE { use\_ability claw\_swipe }
+
+## **5\. Engine Semantics**
+
+These rules define how `AIController` (`src/systems/ai_controller.py`) runs scripts. They are covered by the test suite.
+
+* **Ability ownership.** `use_ability <id>` must name an entry in the enemy's own `abilities` list. Data validation rejects scripts that reference abilities the enemy does not own.
+* **Skipped lines.** A line is skipped without using up the enemy's turn when:
+  * it is blank;
+  * its `CHANCE` roll fails;
+  * its `IF` chain matches no branch;
+  * its ability is on cooldown;
+  * its block is empty (`{ }`).
+* **Fallback and waiting.** If one full pass through the script finds nothing usable, the enemy uses a random ability that is off cooldown. If no ability is off cooldown, the enemy **waits** for that turn. An enemy with no abilities at all uses the built-in Attack.
+* **Loop completion.** A non-interruptible script is "locked in" until its line pointer wraps back to line 0. Skipped lines count toward completing the loop.
+* **Cooldowns.** Each ability entry has a `cooldowns` map, applied after the ability is used:
+  * `"self": N` makes the ability unusable for the enemy's next N turns. `0` means it can be used every turn.
+  * Any other key `"x": M` raises ability `x`'s cooldown to at least M. This models shared cooldowns.
+* **Conditions** use the Action System condition grammar, including `ELSE IF`. An `AND` or `OR` followed by a subject keyword starts a new clause, so `IF LAST_ACTOR IS_PLAYER AND LAST_ACTION ACTION_HAS_TAG spell` combines two checks.
+* **Implicit tags.** Every action automatically carries a tag for where it was defined: `technique`, `spell`, `item` or `basic`. This is what makes `ACTION_HAS_TAG spell` match.
+* **`CHOICE` targeting by an enemy** uses a policy instead of a prompt (see the Action System document). An action can override the policy with an `"ai_target"` field.
+* **Costs.** Enemies ignore `costs`; cooldowns are the only limit on their abilities.
+

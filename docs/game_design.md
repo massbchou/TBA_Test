@@ -41,7 +41,7 @@ The player character is defined by a robust set of statistics, mirroring the cla
 
 The player gains Experience (EXP) by completing events, primarily combat. Upon reaching an EXP threshold, the player levels up. The EXP required for the next level is determined by a configurable algorithm.
 
-* **Level Up Benefits:** When a player levels up, they are presented with a choice of randomly drawn perks or stat increases, pulled from tiered pools.
+* **Level Up Benefits:** When a player levels up, they are presented with a choice of randomly drawn perks or stat increases, pulled from tiered pools. One choice is offered per level gained. The pool used is the highest `tierN` whose N is at most `ceil(level / boss_level_interval)`. A perk marked `"repeatable": false` is never offered again once taken. Perks and occurrence choices share one effect system (`src/systems/effects.py`).
 
 ### **Inventory & Resources**
 
@@ -50,7 +50,9 @@ The player character tracks two primary resources:
 * **Gold:** The main currency, used for shops and other events.  
 * **Inventory:** A list of items the player possesses.
 
-*(TODO: Define the structure for items in the inventory and create a system for using them, both in and out of combat.)*
+**Items** are defined in `data/items.json` and work like abilities: each item has an `action_string` and a `usable_in_combat` flag. The inventory maps item ids to stack sizes. Using an item runs its action and removes one from the stack. Using items outside combat is not implemented yet.
+
+**Stamina and Mana** are resources whose maximums come from formulas in `settings.json` (`player.derived_stats`), based on Constitution and Intelligence. Maximums are recalculated when base stats change. Resources carry over between combats and are fully restored at Rest stops. In combat, Stamina regenerates a small amount every turn (`combat.stamina_regen_per_turn`).
 
 ### **Technical Implementation Notes**
 
@@ -84,7 +86,7 @@ Defeated enemies drop loot based on a loot\_table. Each entry in the table has a
 
 ### **Technical Implementation Notes**
 
-* The Enemy class in character.py inherits from the Character base class.  
+* The Enemy class in models/enemy.py inherits from the Character base class.  
 * All enemy definitions are stored in data/enemies.json.  
 * Each enemy object has a tags array, which the EventManager uses for filtering when constructing combat events.  
 * The abilities list on an enemy object contains references to abilities and their specific cooldown rules.  
@@ -104,7 +106,7 @@ Events are the core content of the game, divided into five Tiers by default, cor
    * **Boss Combat:** A battle against a single, powerful "Boss" enemy appropriate for the current tier.  
 2. **Occurrence Events:** Text-based scenarios that require player choice.  
    * **Normal & Reward:** Present the player with a description and a numbered list of options. The pools of events are separate, with "Reward" occurrences generally offering better outcomes. These events can feature nested choices.  
-   * **Rest:** A special event that allows the player to recover Health, Mana, and Stamina. It will also feature a shop.
+   * **Rest:** A special event that allows the player to recover Health (a fraction set by `combat.rest_heal_fraction`) and fully restore Mana and Stamina. It will also feature a shop.
 
 *(TODO: Implement the shop functionality within the Rest event.)*
 
@@ -133,7 +135,15 @@ The player has six primary action types they can take on their turn. These found
 5. **Bag/Item:** Use an item from the inventory.  
 6. **Run:** Attempt to flee combat.
 
-*(TODO: Define the specific mechanics for the Defend, Technique, Item, and Run actions. Currently, only a generic action exists.)*
+Attack, Defend and Run are built-in Predefined Actions:
+
+* **Attack** deals `basic_attack` PHYSICAL damage. The formula is set per starting class (default `1.0*STR`).
+* **Defend** grants `combat.defend_formula` DEFENSE (default `5+CON/2`) until the end of the player's next turn.
+* **Technique and Cast** list the player's known abilities and spells with their costs. Choosing an option the player cannot afford, or choosing Back, returns to the menu without using up the turn.
+* **Bag** lists items that can be used in combat.
+* **Run** succeeds with probability `clamp(50 + (player speed − average enemy speed) × 0.5, 10, 90)`%. Fleeing grants no rewards but clears the floor. Running is not allowed in Boss fights. A failed attempt still uses up the turn.
+
+Combat ends in one of three outcomes: VICTORY, DEFEAT or FLED.
 
 ### **Technical Implementation Notes**
 
@@ -174,7 +184,7 @@ The system is governed by a set of rules for how scripts are selected and execut
 ### **Technical Implementation Notes**
 
 * **The complete syntax and logic for writing Attack Scripts is specified in the Attack Script document.**  
-* The Enemy class in character.py will need attributes to track AI state (current\_script\_index, current\_script\_line).  
+* The Enemy class (models/enemy.py) tracks AI state in an AIState object (current\_script, line, locked).  
 * A new AIController module should be created to manage all AI logic.  
 * The AIController will parse and execute the script lines, using the same IF condition evaluator built for the Action System.  
 * Malformed script lines are ignored with a warning.
