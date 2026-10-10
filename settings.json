@@ -5,7 +5,13 @@
     "level_up_perk_choices": 3,
     "derived_stats": {
       "max_stamina": "40 + 5 * (con - 10)",
-      "max_mana": "20 + 5 * (int - 10)"
+      "max_mana": "20 + 5 * (int - 10)",
+      "max_health": "base_hp + 6 * con"
+    },
+    "level_up_points": {
+      "floor": 1,
+      "spread": 0.6,
+      "flat_share": 0.5
     }
   },
   "events": {
@@ -143,6 +149,23 @@
       "PHYSICAL",
       "SWORD",
       "STAFF"
-    ]
+    ],
+    "exp_formula": "15 + 8 * level",
+    "exp_category_multiplier": {
+      "Normal": 1,
+      "Special": 1,
+      "Elite": 2.5,
+      "Boss": 5
+    },
+    "enemy_level_variance": 1,
+    "enemy_scaling": {
+      "max_health": 0.08,
+      "str": 0.05,
+      "dex": 0.05,
+      "int": 0.05,
+      "wis": 0.05,
+      "defense": 0.03,
+      "speed": 0.01
+    }
   }
 }

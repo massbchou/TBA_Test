@@ -12,7 +12,6 @@
             "max_health": 22,
             "speed": 140,
             "defense": 1,
-            "exp_reward": 26,
             "fire_resistance": -50,
             "light_resistance": -50,
             "dark_resistance": 50
@@ -48,7 +47,6 @@
             "max_health": 32,
             "speed": 110,
             "defense": 3,
-            "exp_reward": 30,
             "staff_resistance": -50,
             "fire_resistance": -50
         },
@@ -81,7 +79,6 @@
             "max_health": 24,
             "speed": 125,
             "defense": 1,
-            "exp_reward": 26,
             "fire_resistance": -50,
             "lightning_resistance": -50,
             "dark_resistance": 50
@@ -114,7 +111,6 @@
             "max_health": 42,
             "speed": 85,
             "defense": 4,
-            "exp_reward": 32,
             "lightning_resistance": -50,
             "ice_resistance": -50
         },
@@ -134,7 +130,8 @@
                     "IF SELF WITH_STAT HP < 60% AND ABILITY e_bloat IS_READY { use_ability e_bloat } ELSE { use_ability e_tongue_lash }"
                 ]
             }
-        ]
+        ],
+        "growth": {"max_health": 0.12}
     },
     "hollow": {
         "id": 1005,
@@ -148,7 +145,6 @@
             "max_health": 50,
             "speed": 90,
             "defense": 3,
-            "exp_reward": 42,
             "light_resistance": -50,
             "fire_resistance": -50,
             "dark_resistance": 50
@@ -172,7 +168,6 @@
             "max_health": 48,
             "speed": 110,
             "defense": 5,
-            "exp_reward": 44,
             "ice_resistance": -50,
             "staff_resistance": -50,
             "sword_resistance": 30
@@ -206,7 +201,6 @@
             "max_health": 34,
             "speed": 145,
             "defense": 2,
-            "exp_reward": 38,
             "lightning_resistance": -50,
             "light_resistance": -50,
             "dark_resistance": 50
@@ -241,7 +235,6 @@
             "max_health": 46,
             "speed": 80,
             "defense": 4,
-            "exp_reward": 40,
             "fire_resistance": -50,
             "staff_resistance": -50
         },
@@ -270,15 +263,7 @@
         "category": "Normal",
         "tags": ["late", "beast"],
         "intro": "A wolf with fur like cooling ash pads out of the smoke.",
-        "stats": {
-            "str": 15,
-            "dex": 14,
-            "max_health": 56,
-            "speed": 135,
-            "defense": 3,
-            "exp_reward": 54,
-            "ice_resistance": -50
-        },
+        "stats": {"str": 15, "dex": 14, "max_health": 56, "speed": 135, "defense": 3, "ice_resistance": -50},
         "abilities": [
             {"ability_id": "e_bite", "cooldowns": {"self": 0}},
             {"ability_id": "e_howl", "cooldowns": {"self": 4}}
@@ -295,7 +280,8 @@
                     "IF ABILITY e_howl IS_READY AND SELF ALLY_COUNT >= 1 { use_ability e_howl } ELSE { use_ability e_bite }"
                 ]
             }
-        ]
+        ],
+        "growth": {"speed": 0.03}
     },
     "dusk_knight": {
         "id": 1010,
@@ -309,7 +295,6 @@
             "max_health": 62,
             "speed": 90,
             "defense": 8,
-            "exp_reward": 62,
             "staff_resistance": -50,
             "lightning_resistance": -50,
             "light_resistance": -50,
@@ -333,7 +318,8 @@
                     "IF ABILITY e_shield_up IS_READY { use_ability e_shield_up } ELSE { use_ability e_heavy_slash }"
                 ]
             }
-        ]
+        ],
+        "growth": {"defense": 0.06}
     },
     "cinder_imp": {
         "id": 1011,
@@ -348,7 +334,6 @@
             "max_health": 38,
             "speed": 130,
             "defense": 2,
-            "exp_reward": 50,
             "ice_resistance": -50,
             "fire_resistance": 80
         },
@@ -365,7 +350,7 @@
         "category": "Special",
         "tags": ["event", "humanoid"],
         "intro": "The big man rolls his shoulders and grins. 'Gloves off.'",
-        "stats": {"str": 12, "dex": 10, "max_health": 45, "speed": 100, "defense": 3, "exp_reward": 35},
+        "stats": {"str": 12, "dex": 10, "max_health": 45, "speed": 100, "defense": 3},
         "abilities": [
             {"ability_id": "e_slash", "cooldowns": {"self": 0}},
             {"ability_id": "e_bloat", "cooldowns": {"self": 4}}
@@ -395,7 +380,6 @@
             "max_health": 95,
             "speed": 115,
             "defense": 6,
-            "exp_reward": 130,
             "staff_resistance": -50,
             "light_resistance": -50
         },
@@ -433,7 +417,6 @@
             "max_health": 85,
             "speed": 105,
             "defense": 4,
-            "exp_reward": 130,
             "fire_resistance": -50,
             "light_resistance": -50,
             "dark_resistance": 50
@@ -471,7 +454,6 @@
             "max_health": 90,
             "speed": 140,
             "defense": 4,
-            "exp_reward": 135,
             "light_resistance": -50,
             "ice_resistance": -50,
             "dark_resistance": 50
@@ -510,8 +492,6 @@
             "max_health": 235,
             "speed": 100,
             "defense": 8,
-            "exp_reward": 400,
-            "light_resistance": -50,
             "staff_resistance": -50,
             "lightning_resistance": -50,
             "sword_resistance": 30,
@@ -559,7 +539,6 @@
             "max_health": 210,
             "speed": 120,
             "defense": 4,
-            "exp_reward": 400,
             "fire_resistance": -25,
             "dark_resistance": 60
         },

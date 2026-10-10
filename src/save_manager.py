@@ -11,12 +11,12 @@ from src.game_state import GameState
 from src.models.character import Resource, Variable
 from src.models.player import Player
 
-SAVE_VERSION = 1
+SAVE_VERSION = 2
 SAVE_DIR = Path("saves")
 
 _PLAYER_FIELDS = (
     "name", "class_name", "stats", "tags", "health", "level", "exp", "exp_to_next_level", "gold",
-    "inventory", "abilities", "spells", "perks", "basic_attack", "basic_attack_type", "growth",
+    "inventory", "abilities", "spells", "perks", "basic_attack", "basic_attack_type", "stat_weights",
     "derived_formulas",
 )
 
@@ -82,6 +82,8 @@ def list_saves(directory: Path = SAVE_DIR) -> list[tuple[Path, str]]:
     for path in sorted(directory.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
         try:
             data = json.loads(path.read_text())
+            if data.get("version") != SAVE_VERSION:
+                continue  # saves from older versions can't be resumed
             p = data["player"]
             saves.append((path, f"{p['name']} - Level {p['level']} {p['class_name']}, floor {data['floor']}"))
         except (OSError, ValueError, KeyError):

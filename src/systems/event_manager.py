@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.models.enemy import Enemy
 from src.rng import get_rng
+from src.systems.scaling import spawn_level
 from src.systems.events import CombatEvent, Event, OccurrenceEvent, RestEvent
 from src.utils import weighted_choice
 
@@ -131,8 +132,8 @@ class EventManager:
 
         chosen_slugs = self.rng.choices(candidates, k=num_enemies)
         self._floor_enemies |= set(chosen_slugs)
-        encounter = [self.data_loader.build_enemy(slug) for slug in chosen_slugs]
-        names = ", ".join(e.name for e in encounter)
+        encounter = [self._spawn(slug, level) for slug in chosen_slugs]
+        names = ", ".join(f"{e.name} (Lv {e.level})" for e in encounter)
 
         return CombatEvent(
             event_id="regular_combat",
@@ -142,6 +143,10 @@ class EventManager:
             subtype="Regular",
             is_mystery=is_mystery,
         )
+
+    def _spawn(self, slug: str, floor: int, levels: dict[str, Any] | None = None) -> Enemy:
+        """Builds an enemy at its spawn level for this floor (see ``scaling.spawn_level``)."""
+        return self.data_loader.build_enemy(slug, spawn_level(slug, floor, self.rng, self.settings, levels))
 
     def _band_candidates(self, rules: dict[str, Any] | None, category: str) -> list[str]:
         """Enemies of a category, narrowed to the band's ``regular_combat.enemy_tags`` (any match) when set."""
@@ -168,7 +173,7 @@ class EventManager:
         ]
         if use_preconstructed and preconstructed:
             ordeal_key, ordeal_data = self.rng.choice(preconstructed)
-            encounter = [self.data_loader.build_enemy(slug) for slug in ordeal_data.get("enemies", [])]
+            encounter = [self._spawn(slug, level, ordeal_data.get("levels")) for slug in ordeal_data.get("enemies", [])]
             return CombatEvent(
                 event_id=ordeal_key,
                 display_name=ordeal_data.get("display_name", "Ambush"),
@@ -192,12 +197,12 @@ class EventManager:
         encounter: list[Enemy] = []
         if elite_candidates:
             for slug in self.rng.choices(elite_candidates, k=num_elites):
-                encounter.append(self.data_loader.build_enemy(slug))
+                encounter.append(self._spawn(slug, level))
         if normal_candidates and num_normals > 0:
             for slug in self.rng.choices(normal_candidates, k=num_normals):
-                encounter.append(self.data_loader.build_enemy(slug))
+                encounter.append(self._spawn(slug, level))
 
-        names = ", ".join(e.name for e in encounter)
+        names = ", ".join(f"{e.name} (Lv {e.level})" for e in encounter)
         return CombatEvent(
             event_id="ordeal_random",
             display_name=names,
@@ -236,7 +241,7 @@ class EventManager:
         boss_events = self.data_loader.events.get("boss_events", {})
         if boss_events:
             key, bdata = self.rng.choice(list(boss_events.items()))
-            encounter = [self.data_loader.build_enemy(slug) for slug in bdata.get("enemies", [])]
+            encounter = [self._spawn(slug, level, bdata.get("levels")) for slug in bdata.get("enemies", [])]
             return CombatEvent(
                 event_id=key,
                 display_name=bdata.get("display_name", "The Warden"),
@@ -251,7 +256,7 @@ class EventManager:
             boss_candidates = list(self.data_loader.enemies.keys())
 
         slug = self.rng.choice(boss_candidates)
-        boss = self.data_loader.build_enemy(slug)
+        boss = self._spawn(slug, level)
         return CombatEvent(
             event_id=f"boss_{slug}",
             display_name=boss.name,

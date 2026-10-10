@@ -196,22 +196,39 @@ class TestCombatRules(Base):
         run(battle, p, "GAIN_GOLD SELF 7\nGAIN_GOLD 1_ENEMY 5")  # enemies hold no gold: no-op
         self.assertEqual(p.gold, 7)
 
-    def test_growth_regen_and_victory_restore(self):
-        self.player.growth = {"max_health": 10, "str": 1}
+    def _settings(self, **combat):
         settings = copy.deepcopy(self.loader.settings)
-        settings["combat"].update({"resource_regen": {"stamina": 3, "mana": 2}, "post_victory_restore": 0.5})
-        settings["player"].update({"exp_formula": "10", "exp_base": 10})
-        self.player.exp_to_next_level = 10
+        settings["combat"].update(combat)
+        return settings
+
+    def test_regen_and_victory_restore(self):
+        settings = self._settings(resource_regen={"stamina": 3, "mana": 2}, post_victory_restore=0.5)
         self.player.resources["stamina"].current = 0
-        self.player.resources["mana"].current = 0
         combat = Combat(self.player, settings, self.loader, input_provider=ScriptedInput(["Attack"]),
                         rng=random.Random(0), narrator=lambda s: None, run_stats={})
-        combat.run([make_enemy(max_health=1, speed=1, exp_reward=10)])
-        self.assertEqual(self.player.level, 2)
-        self.assertEqual((self.player.get_stat("max_health"), self.player.get_stat("str")), (130, 17))
+        combat.run([make_enemy(max_health=1, speed=1, exp_reward=1)])
         stamina = self.player.resources["stamina"]
         self.assertEqual(stamina.current, 3 + stamina.maximum // 2)
         self.assertEqual(combat.run_stats["enemies_defeated"], 1)
+
+    def test_level_up_rolls_points_and_fully_heals(self):
+        settings = self._settings()
+        settings["player"].update({"exp_formula": "10", "exp_base": 10})
+        self.player.exp_to_next_level = 10
+        self.player.stat_weights = {"str": 5, "con": 4}
+        self.player.health = 5
+        self.player.resources["mana"].current = 0
+        before = {s: self.player.base_stat(s) for s in ("str", "dex", "con", "int", "wis", "cha")}
+        log = []
+        combat = Combat(self.player, settings, self.loader, input_provider=ScriptedInput(["Attack"]),
+                        rng=random.Random(4), narrator=log.append)
+        combat.run([make_enemy(max_health=1, speed=1, exp_reward=10)])
+        gained = sum(self.player.base_stat(s) - v for s, v in before.items())
+        self.assertEqual(self.player.level, 2)
+        self.assertGreaterEqual(gained, 1)
+        self.assertEqual(self.player.health, int(self.player.get_stat("max_health")))
+        self.assertEqual(self.player.resources["mana"].current, self.player.resources["mana"].maximum)
+        self.assertTrue(any(line.startswith(f"    +{int(gained)} stat point") for line in log))
 
     def test_class_restricted_perks(self):
         perks = {"tier1": [{"perk_id": "w", "name": "W", "requires": {"class": "Warrior"},
@@ -239,7 +256,7 @@ class TestSaveLoad(Base):
             save_manager.delete(path)
             self.assertFalse(path.exists())
         lp = loaded.player
-        for field in ("name", "class_name", "gold", "health", "perks", "inventory", "stats", "abilities", "level"):
+        for field in ("name", "class_name", "gold", "health", "perks", "inventory", "stats", "abilities", "level", "stat_weights"):
             self.assertEqual(getattr(lp, field), getattr(p, field), field)
         self.assertEqual(lp.resources["mana"].current, 1)
         self.assertTrue(lp.variables["met_the_hermit"].value)

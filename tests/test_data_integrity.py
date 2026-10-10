@@ -38,12 +38,13 @@ class TestEndToEnd(unittest.TestCase):
         first = self.play(1)
         self.assertEqual(first, self.play(1))
         self.assertIn("FLOOR 1", first)
-        self.assertIn("GAME OVER", first)
+        self.assertTrue("GAME OVER" in first or "THE END" in first)
 
     def test_many_seeds_complete_without_errors(self):
         for seed in range(15):
             with self.subTest(seed=seed):
-                self.assertIn("GAME OVER", self.play(seed, floors=10))
+                out = self.play(seed, floors=10)
+                self.assertTrue("GAME OVER" in out or "THE END" in out)
 
 
 if __name__ == "__main__":

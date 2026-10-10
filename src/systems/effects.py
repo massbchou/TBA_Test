@@ -109,6 +109,13 @@ def _learn_action(player, effect, loader) -> str:
     return f"You learn {action.name}!"
 
 
+@register_effect("exp", ("amount",))
+def _exp(player, effect, loader) -> str:
+    # Level-ups need the Combat system, so OccurrenceEvent handles this type itself.
+    # ``amount`` may be a formula using ``floor`` (e.g. "10 + 6 * floor").
+    return ""
+
+
 @register_effect("combat", ("enemies",))
 def _combat(player, effect, loader) -> str:
     # Combat needs the running Combat system, so OccurrenceEvent handles this type itself.
