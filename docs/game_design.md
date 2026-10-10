@@ -38,11 +38,33 @@ The player character is defined by a robust set of statistics, mirroring the cla
 * **Derived Stats:** Defense, Max Health, Stamina, Mana, Speed, Luck. These are visible to the player at all times.  
 * **Hidden Stats:** A set of internal stats not normally visible, such as Fire Resistance or Regeneration Rate. By default, these are zero but can be modified by events or abilities.
 
+**What each stat does:**
+
+| Stat | Used by |
+| :---- | :---- |
+| STR | Basic Attack (Warrior, Priest; part of the Mage's), Warrior techniques, Rebuke, Collector's Strike, enemy physical attacks |
+| DEX | Martial Artist's Attack and techniques, Collector's Strike |
+| CON | **Max HP** (`base_hp + 6 × CON`, plus any bonus HP) and Max Stamina (`40 + 5 × (CON − 10)`) |
+| INT | Mage spells, Max Mana (except the Priest's), enemy spells |
+| WIS | Priest heals, Smite, Renewal, the Priest's Max Mana |
+| CHA | Shop discount (2% per point above 10, up to 25%) |
+| Defense | Flat reduction of physical-type damage (PHYSICAL, SWORD, STAFF) |
+| Speed | Turn frequency |
+| Luck | Currently unused |
+
+Max HP is derived: changes to it from perks or events (e.g. Stout Heart) go to a separate **bonus HP** stat, and raising CON raises both maximum and current HP.
+
 ### **Leveling & Experience**
 
-The player gains Experience (EXP) by completing events, primarily combat. Upon reaching an EXP threshold, the player levels up. The EXP required for the next level is determined by a configurable algorithm.
+The player gains EXP from winning fights and from some events. A fight's EXP is `combat.exp_formula` of each enemy's **level** (`15 + 8 × level`), multiplied by its category: Elite ×2.5, Boss ×5. Event EXP can scale with the floor (e.g. `10 + 6 × floor`). The EXP needed for the next level is `player.exp_formula` (`50 × 1.25^(level − 1)`). Leftover EXP carries over, so one fight can give several levels.
 
-* **Level Up Benefits:** When a player levels up, they are presented with a choice of randomly drawn perks or stat increases, pulled from tiered pools. One choice is offered per level gained. The pool used is the highest `tierN` whose N is at most `ceil(level / boss_level_interval)`. A perk marked `"repeatable": false` is never offered again once taken. Perks and occurrence choices share one effect system (`src/systems/effects.py`).
+**Each level-up**, in order:
+
+1. **Random stat points.** The number of points N is drawn from a flattened bell centred on the new level: half the time it is uniform between the floor (1) and 2 × level, otherwise a normal draw with a standard deviation of 0.6 × level. N is never below the floor. Each point lands on one of the six primary stats, weighted by the class's `stat_weights`. The bias fades as N rises above the floor (`weight ^ (1 / (1 + (N − 1) / level))`): small rolls go to class stats, big rolls spread across all six.
+2. **Full heal:** HP, Stamina and Mana are restored to full.
+3. **Perk choice** (none after the final fight).
+
+* **Level Up Benefits:** The perk choice is drawn from tiered pools. One choice is offered per level gained. The pool used is the highest `tierN` whose N is at most `ceil(level / boss_level_interval)`. A perk marked `"repeatable": false` is never offered again once taken. Perks and occurrence choices share one effect system (`src/systems/effects.py`).
 
 ### **Inventory & Resources**
 
@@ -76,6 +98,17 @@ Enemies are grouped into four main categories, which dictates how they are used 
 * **Elite:** More powerful enemies with unique abilities, found in Ordeal events.  
 * **Boss:** The most powerful enemies, appearing only in designated Boss events.  
 * **Special:** Reserved for unique, scripted encounters.
+
+### **Levels and Scaling**
+
+An enemy's data `level` is its **base level**, and its `stats` are its stats at that level. Its **spawn level** comes from the floor, using the first of these that applies:
+
+1. An event's `levels` map for that enemy (boss events fix the bosses at 10).
+2. The floor band's `enemy_levels` map.
+3. The floor band's `level_range`.
+4. Otherwise, the floor ±1 (`combat.enemy_level_variance`).
+
+Stats scale linearly from the base level: `base × max(0.4, 1 + rate × (level − base_level))`. The default rates are +8% Max HP, +5% STR/DEX/INT/WIS, +3% Defense and +1% Speed per level. A family can grow faster in chosen stats with `growth` (Ash Wolves gain speed, Dusk-Touched Knights gain defense, Mire Toads gain HP). Resistances don't scale. Levels are shown on the path choices and in combat.
 
 ### **Abilities & AI**
 

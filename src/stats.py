@@ -29,6 +29,7 @@ _ALIASES = {
 _DISPLAY = {
     "max_health": "Max HP", "health": "HP", "defense": "Defense", "speed": "Speed", "luck": "Luck",
     "stamina": "Stamina", "mana": "Mana", "max_stamina": "Max Stamina", "max_mana": "Max Mana",
+    "hp_bonus": "Bonus HP", "base_hp": "Base HP",
 }
 
 
@@ -54,7 +55,7 @@ def is_known_stat(name: str) -> bool:
         key in PRIMARY_STATS
         or key in DERIVED_STATS
         or key in RESOURCES
-        or key in (HEALTH, HP_PERCENTAGE, "max_stamina", "max_mana")
+        or key in (HEALTH, HP_PERCENTAGE, "max_stamina", "max_mana", "hp_bonus", "base_hp")
         or key.endswith("_resistance")
         or key.endswith("_regen")
     )

@@ -18,7 +18,7 @@ class Player(Character):
     class_name: str = ""
     basic_attack: str = "1.0*STR"
     basic_attack_type: str = "PHYSICAL"
-    growth: dict[str, int] = field(default_factory=dict)
+    stat_weights: dict[str, float] = field(default_factory=dict)
     derived_formulas: dict[str, str] = field(default_factory=dict)
     exp_to_next_level: int = 0
 
@@ -29,22 +29,31 @@ class Player(Character):
     # ------------------------------------------------------- derived stats
 
     def _base_value(self, name: str) -> float:
+        if name.lower() == "level":
+            return float(self.level)
         key = canonical_stat(name)
         if key in self.stats or is_known_stat(key):
             return float(self.stats.get(key, 0))
         raise KeyError(name)
 
     def recalculate_derived(self) -> None:
-        """Recomputes resource maxima (``max_stamina`` / ``max_mana``) from base stats.
+        """Recomputes derived maxima from base stats.
 
-        A raised maximum also raises the current value by the difference; a lowered
-        one clamps it.
+        ``max_health`` (if it has a formula) becomes the formula plus ``hp_bonus``;
+        ``max_stamina`` / ``max_mana`` become resource maxima. A raised maximum also
+        raises the current value by the difference; a lowered one clamps it.
         """
         for stat, formula in self.derived_formulas.items():
             if not stat.startswith("max_"):
                 continue
-            resource = stat[4:]
             new_max = max(0, int(evaluate_formula(formula, resolver=self._base_value)))
+            if stat == "max_health":
+                new_max = max(1, new_max + int(self.stats.get("hp_bonus", 0)))
+                old_max = int(self.stats.get("max_health", 0))
+                self.stats["max_health"] = new_max
+                self.health = max(0, min(new_max, self.health + max(0, new_max - old_max)))
+                continue
+            resource = stat[4:]
             res = self.resources.get(resource)
             if res is None:
                 self.resources[resource] = Resource(new_max, new_max)
@@ -56,19 +65,19 @@ class Player(Character):
     def _on_base_stats_changed(self) -> None:
         self.recalculate_derived()
 
+    def modify_base_stat(self, name: str, delta: float) -> None:
+        """Max HP is derived from CON when it has a formula, so direct Max HP changes
+        (perks, events) go to the separate ``hp_bonus`` stat instead."""
+        if canonical_stat(name) == "max_health" and "max_health" in self.derived_formulas:
+            name = "hp_bonus"
+        super().modify_base_stat(name, delta)
+
+    def full_heal(self) -> None:
+        self.health = int(self.get_stat("max_health"))
+        self.refill_resources()
+
     def owns(self, action_id: str) -> bool:
         return action_id in self.abilities or action_id in self.spells
-
-    def apply_growth(self) -> list[str]:
-        """Applies one level's worth of class stat growth. Returns readable changes."""
-        changes = []
-        for stat, amount in self.growth.items():
-            if amount:
-                self.modify_base_stat(stat, amount)
-                from src.stats import display_name
-
-                changes.append(f"{display_name(stat)} {amount:+d}")
-        return changes
 
     def refill_resources(self) -> None:
         for res in self.resources.values():

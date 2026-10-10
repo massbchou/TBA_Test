@@ -94,12 +94,22 @@ class Camp:
                         input_provider=self.input, settings=self.combat.settings, narrator=self.narrate)
         self.combat.action_orchestrator.execute(state.player, action, battle, log=False)
 
+    @staticmethod
+    def _hp_breakdown(p) -> str:
+        """Explains derived Max HP, e.g. ' (40 base + 6 x CON 15 + 15 bonus)'."""
+        if "max_health" not in p.derived_formulas:
+            return ""
+        bonus = int(p.stats.get("hp_bonus", 0))
+        derived = int(p.get_stat("max_health")) - bonus
+        text = f" (CON {int(p.base_stat('con'))} gives {derived}"
+        return text + (f", +{bonus} bonus)" if bonus else ")")
+
     def character_sheet(self, state: "GameState") -> str:
         p = state.player
         stats = " ".join(f"{k.upper()} {int(p.get_stat(k))}" for k in ("str", "dex", "con", "int", "wis", "cha"))
         lines = [
             f"\n--- {p.name}, Level {p.level} {p.class_name} ---",
-            f"HP {p.health}/{int(p.get_stat('max_health'))} | DEF {int(p.get_stat('defense'))} | "
+            f"HP {p.health}/{int(p.get_stat('max_health'))}{self._hp_breakdown(p)} | DEF {int(p.get_stat('defense'))} | "
             f"SPEED {int(p.get_stat('speed'))} | Gold {p.gold} | EXP {p.exp}/{p.exp_to_next_level}",
             stats,
         ]

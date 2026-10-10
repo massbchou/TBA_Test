@@ -21,7 +21,10 @@ from src.rng import get_rng
 from src.systems.action_orchestrator import ActionOrchestrator
 from src.systems.actions.definitions import SOURCE_ITEM, SOURCE_SPELL, SOURCE_TECHNIQUE, ActionDef, ActionRegistry
 from src.systems.ai_controller import AIController
+from src.formula import evaluate_formula
+from src.stats import display_name
 from src.systems.battle import Battle
+from src.systems.progression import roll_stat_points
 
 if TYPE_CHECKING:
     from src.data_loader import DataLoader
@@ -105,7 +108,7 @@ class Combat:
         self.narrate("\n================== COMBAT STARTS ==================")
         self.narrate(f"Hero: {self.player.name} (HP: {self.player.health}/{self.player.get_stat('max_health')}, Speed: {self.player.get_stat('speed')})")
         for enemy in self.enemies:
-            self.narrate(f"Enemy: {enemy.name} (HP: {enemy.health}/{enemy.get_stat('max_health')}, Speed: {enemy.get_stat('speed')})")
+            self.narrate(f"Enemy: {enemy.name}, Lv {enemy.level} (HP: {enemy.health}/{enemy.get_stat('max_health')}, Speed: {enemy.get_stat('speed')})")
 
         for p in battle.participants:
             p.action_time = 0
@@ -223,7 +226,7 @@ class Combat:
         player = self.player
         self.narrate("\n" + self._status_line(player))
         for enemy in battle.enemies_of(player):
-            self.narrate("  vs " + self._status_line(enemy))
+            self.narrate(f"  vs Lv {enemy.level} " + self._status_line(enemy))
 
         menu = ["Attack", "Defend"]
         # The category with more known actions comes first, so learning one off-class skill
@@ -309,6 +312,31 @@ class Combat:
 
     # ------------------------------------------------------------ rewards
 
+    def exp_for(self, enemy: Enemy) -> int:
+        """EXP from an enemy: ``combat.exp_formula`` of its level, times its category multiplier.
+        An ``exp_reward`` stat overrides the formula."""
+        if enemy.stats.get("exp_reward"):
+            return int(enemy.stats["exp_reward"])
+        cfg = self.settings.get("combat", {})
+        base = evaluate_formula(cfg.get("exp_formula", "12 + 6 * level"), level=enemy.level)
+        multiplier = cfg.get("exp_category_multiplier", {"Elite": 2.5, "Boss": 5}).get(enemy.category, 1)
+        return max(1, round(base * multiplier))
+
+    def level_up(self, level: int) -> dict[str, int]:
+        """Rolls and applies random stat points for a new level, then fully heals."""
+        player = self.player
+        cfg = self.settings.get("player", {}).get("level_up_points", {})
+        points = roll_stat_points(player.stat_weights, level, self.rng, cfg)
+        for stat, amount in points.items():
+            player.modify_base_stat(stat, amount)
+        player.full_heal()
+        total = sum(points.values())
+        gains = ", ".join(f"{display_name(s)} +{n}" for s, n in sorted(points.items(), key=lambda kv: -kv[1]))
+        self.narrate(f"*** LEVEL UP! You reached Level {level}! ***")
+        self.narrate(f"    +{total} stat point{'s' if total != 1 else ''}: {gains}")
+        self.narrate(f"    Fully restored. (HP {player.health}/{int(player.get_stat('max_health'))})")
+        return points
+
     def _process_post_combat_rewards(self) -> None:
         """Distributes EXP, gold and item loot, then offers perks for each level gained."""
         total_exp = 0
@@ -320,7 +348,7 @@ class Combat:
             total_gold += recovered
             self.narrate(f"You take back the {recovered} gold that was stolen from you.")
         for enemy in self.enemies:
-            total_exp += int(enemy.get_stat("exp_reward") or (enemy.level * 20))
+            total_exp += self.exp_for(enemy)
             for loot in enemy.loot_table:
                 if self.rng.random() > loot.get("chance", 1.0):
                     continue
@@ -339,15 +367,17 @@ class Combat:
             name = self.actions[item_id].name if item_id in self.actions else item_id
             self.narrate(f"Found {name} x{qty}!")
 
+        self.grant_exp(total_exp)
+
+    def grant_exp(self, amount: int) -> list[int]:
+        """Awards EXP and runs every level-up it causes (points, full heal, perk). Used by
+        combat rewards and by events."""
         exp_formula = self.settings.get("player", {}).get("exp_formula", "100")
         exp_base = self.settings.get("player", {}).get("exp_base", 100)
-        leveled = self.player.add_exp(total_exp, exp_formula, exp_base)
-
-        self.narrate(f"Gained {total_exp} EXP! (Current EXP: {self.player.exp}/{self.player.exp_to_next_level})")
+        leveled = self.player.add_exp(amount, exp_formula, exp_base)
+        self.narrate(f"Gained {amount} EXP! (Current EXP: {self.player.exp}/{self.player.exp_to_next_level})")
         for lvl in leveled:
-            self.narrate(f"*** LEVEL UP! You reached Level {lvl}! ***")
-            growth = self.player.apply_growth()
-            if growth:
-                self.narrate("    " + ", ".join(growth))
+            self.level_up(lvl)
             if self.perk_manager is not None:
                 self.perk_manager.offer(self.player, lvl)
+        return leveled

@@ -191,8 +191,20 @@ class OccurrenceEvent(Event):
 
         loader = combat_system.data_loader
         for effect in effects:
+            if effect.get("type") == "exp":
+                from src.formula import evaluate_formula
+
+                amount = evaluate_formula(str(effect["amount"]), floor=game_state.current_level)
+                combat_system.grant_exp(max(0, round(amount)))
+                continue
             if effect.get("type") == "combat":
-                enemies = [loader.build_enemy(slug) for slug in effect["enemies"]]
+                from src.systems.scaling import spawn_level
+
+                floor = game_state.current_level
+                enemies = [
+                    loader.build_enemy(slug, spawn_level(slug, floor, combat_system.rng, loader.settings, effect.get("levels")))
+                    for slug in effect["enemies"]
+                ]
                 result = combat_system.run(enemies, subtype=effect.get("subtype", "Regular"))
                 if result is CombatResult.DEFEAT:
                     return False
@@ -248,7 +260,10 @@ class RestEvent(Event):
         fraction = game_state.settings.get("combat", {}).get("rest_heal_fraction", 0.5)
         healed = player.heal(max(1, int(max_hp * fraction)))
         player.refill_resources()
-        print(f"You rest by the warm coals and recover {healed} HP. (HP {player.health}/{max_hp})")
+        if healed:
+            print(f"You rest by the warm coals and recover {healed} HP. (HP {player.health}/{max_hp})")
+        else:
+            print("You rest by the warm coals.")
         if player.resources:
             print("Your stamina and mana are fully restored.")
 

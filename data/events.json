@@ -22,7 +22,7 @@
                 },
                 "Shoulder through the shallows (Warrior)": {
                     "result_text": "You plant your feet and walk it. The ferryman whistles. 'Never seen that before.'",
-                    "effects": [{"type": "gold", "amount": 5}],
+                    "effects": [{"type": "gold", "amount": 5}, {"type": "exp", "amount": "8 + 5 * floor"}],
                     "requires": {"class": "Warrior"}
                 }
             }
@@ -48,7 +48,10 @@
                 },
                 "Study the carvings (WIS 12)": {
                     "result_text": "Among the prayers is a simple healing rite. You commit it to memory.",
-                    "effects": [{"type": "learn_action", "action_id": "mend"}],
+                    "effects": [
+                        {"type": "learn_action", "action_id": "mend"},
+                        {"type": "exp", "amount": "10 + 6 * floor"}
+                    ],
                     "requires": {"stat": {"wis": 12}}
                 }
             }
@@ -124,7 +127,10 @@
                 },
                 "Trade notes (Mage)": {
                     "result_text": "You argue about lightning for an hour. You both come away sharper.",
-                    "effects": [{"type": "stat_change", "stat": "int", "value": 2}],
+                    "effects": [
+                        {"type": "stat_change", "stat": "int", "value": 2},
+                        {"type": "exp", "amount": "10 + 6 * floor"}
+                    ],
                     "requires": {"class": "Mage"}
                 },
                 "Politely decline": {"result_text": "'Your loss,' she says cheerfully.", "effects": []}
@@ -175,7 +181,11 @@
                 },
                 "Show them real technique (Martial Artist)": {
                     "result_text": "You put him down with one finger. The crowd goes quiet, then wild.",
-                    "effects": [{"type": "gold", "amount": 25}, {"type": "stat_change", "stat": "dex", "value": 1}],
+                    "effects": [
+                        {"type": "gold", "amount": 25},
+                        {"type": "stat_change", "stat": "dex", "value": 1},
+                        {"type": "exp", "amount": "10 + 6 * floor"}
+                    ],
                     "requires": {"class": "Martial Artist"}
                 },
                 "Keep walking": {"result_text": "You have enough bruises.", "effects": []}
@@ -192,7 +202,7 @@
                     "effects": [{"type": "heal", "amount": 30}, {"type": "item", "item_id": "antivenom", "quantity": 2}]
                 },
                 "Ask about the Dusk": {
-                    "description": "'It doesn't hunt. It just... arrives. Like evening. Want something to keep it off you?'",
+                    "description": "'It doesn't hunt. It just... arrives. Like evening.' She talks until the fire burns low; you learn more than you expected. 'Want something to keep it off you?'",
                     "choices": {
                         "Accept her bitter charm (+3 INT, -10 max HP)": {
                             "result_text": "It tastes like pennies and regret. Your thoughts are very clear.",
@@ -208,7 +218,10 @@
                                 {"type": "stat_change", "stat": "speed", "value": -5}
                             ]
                         },
-                        "Decline politely": {"result_text": "'Suit yourself, dearie.'", "effects": []}
+                        "Decline politely": {
+                            "result_text": "'Suit yourself, dearie.'",
+                            "effects": [{"type": "exp", "amount": "10 + 6 * floor"}]
+                        }
                     }
                 }
             },
@@ -253,8 +266,12 @@
             "tags": ["occurrence", "reward"],
             "choices": {
                 "Help haul the oil": {
-                    "result_text": "They thank you with coin and a hot meal.",
-                    "effects": [{"type": "gold", "amount": 15}, {"type": "heal", "amount": 20}]
+                    "result_text": "They thank you with coin, a hot meal, and some hard-won road sense.",
+                    "effects": [
+                        {"type": "gold", "amount": 15},
+                        {"type": "heal", "amount": 20},
+                        {"type": "exp", "amount": "8 + 5 * floor"}
+                    ]
                 },
                 "Buy lantern oil (30 gold)": {
                     "result_text": "'Open it all at once and stand back,' they advise.",
@@ -402,14 +419,16 @@
             "display_name": "Ashgate: The Warden",
             "description": "The first gate rises out of the ash, and its guardian with it.",
             "tags": ["boss_event"],
-            "enemies": ["ashgate_warden"]
+            "enemies": ["ashgate_warden"],
+            "levels": {"ashgate_warden": [10, 10]}
         },
         "moth_gate": {
             "id": 5002,
             "display_name": "Ashgate: The Mother of Moths",
             "description": "At Ashgate the lanterns are all out. Something has been eating the light.",
             "tags": ["boss_event"],
-            "enemies": ["mother_of_moths"]
+            "enemies": ["mother_of_moths"],
+            "levels": {"mother_of_moths": [10, 10]}
         }
     }
 }

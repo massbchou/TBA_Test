@@ -4,6 +4,47 @@ This log records content passes, playtest results, and what manual play found. N
 
 ---
 
+## Pass 3: Progression rework (2026-10-10)
+
+**Branch:** `feat/progression`
+
+### What changed
+- **Enemy levels.** An enemy's data `level` is its base level. Spawn level comes from the floor (event
+  `levels` > band `enemy_levels` > band `level_range` > floor ±1). Stats scale per level, with family
+  `growth` bonuses. Levels are shown on paths and in combat.
+- **EXP** is `15 + 8 × level` per enemy (Elite ×2.5, Boss ×5). Some events also grant floor-scaled EXP.
+- **Max HP** is derived as `base_hp + 6 × CON`, plus bonus HP from perks and events.
+- **Level-ups** grant a random number of stat points (a flattened bell centred on the level, with a
+  minimum of 1). The class bias fades on big rolls. Every level-up fully restores HP, Stamina and Mana.
+
+### Playtest (heuristic, 300 runs per class)
+
+| Class | Boss reached | Clear rate | Level at boss (mode) | 1-dmg hits |
+|:---|---:|---:|---:|---:|
+| Warrior | 76% | 37% | 5 | 1.0% |
+| Martial Artist | 68% | 44% | 5 | 1.3% |
+| Priest | 79% | 59% | 5 | 1.2% |
+| Mage | 82% | 62% | 5 | 1.1% |
+
+The Mage sits 2 points over the 60% ceiling, which is within run-to-run noise. Its starting INT was
+trimmed from 17 to 16.
+
+### Manual playtest notes
+- **Warrior (seed 515).** A CON +3 charm raised Max HP 130 → 148 and current HP by the same amount. One
+  fight gave two level-ups, each fully healing (154/154, then 160/160). Levels on path labels read well
+  ("Mire Toad (Lv 4)" on floor 3).
+  - Observation: at low levels even an average roll counts as "big" relative to the floor, so a
+    Warrior's level-2 roll of 3 points landed on CON, INT and CHA. This is the specified behaviour.
+    Raise `level_up_points.floor` or reduce flattening if early levels should stay more on-class.
+- **Mage (seed 616): found a hole.** EXP only came from fights while enemy levels rise with the floor, so
+  a route through a rest and an event reached floor 4 at level 1 and met a level-5 elite. → An `exp`
+  effect for events (floor-scaled) is now used by six events.
+- **Priest vs the Warden (level 5, isolated).** A close fight (won with 6 HP left). Rolls varied from 4
+  to 11 points; big rolls spread into off-class stats as designed.
+- The character sheet now explains Max HP ("CON 16 gives 134, +15 bonus").
+
+---
+
 ## Pass 2: The Lantern Road (2026-10-10)
 
 **Branch:** `feat/content-pass` · **Plan:** content improvement plan (holes and bugs, dull areas, new

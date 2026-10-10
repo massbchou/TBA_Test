@@ -9,7 +9,7 @@ from src.formula import validate_formula
 from src.models.enemy import Enemy
 from src.models.player import Player
 from src.models.status import STACKING_MODES, StatusDef
-from src.stats import is_known_stat
+from src.stats import PRIMARY_STATS, is_known_stat
 from src.systems.actions.definitions import (
     SOURCE_ITEM,
     SOURCE_SPELL,
@@ -20,9 +20,16 @@ from src.systems.actions.nodes import Diagnostic
 from src.systems.actions.parser import parse_program
 from src.systems.ai.script_parser import parse_scripts, referenced_abilities
 from src.systems.effects import EFFECTS, REQUIRED_PARAMS
+from src.systems.scaling import scale_stats, scaling_rates
 
 REQUIREMENT_KEYS = {"gold", "class", "item", "stat", "level"}
 CHOICE_KEYS = {"result_text", "description", "requires", "effects", "choices", "chance", "success", "failure"}
+
+def formulas_for(loader: "DataLoader", class_name: str) -> dict[str, str]:
+    """A class's derived-stat formulas: settings defaults merged with the class's overrides."""
+    data = loader.starting_classes.get(class_name, {})
+    return {**loader.settings.get("player", {}).get("derived_stats", {}), **data.get("derived_stats", {})}
+
 
 def perk_effects(perk: dict[str, Any]) -> list[dict[str, Any]]:
     """A perk holds either one ``effect`` or a list of ``effects``."""
@@ -85,18 +92,21 @@ class DataLoader:
         self.status_defs = {name.upper(): StatusDef.from_data(name, d) for name, d in self.statuses.items()}
         self.actions = ActionRegistry.build(self.abilities, self.spells, self.items)
 
-    def build_enemy(self, slug: str) -> Enemy:
-        """Constructs an Enemy model instance from an enemy data slug."""
+    def build_enemy(self, slug: str, level: int | None = None) -> Enemy:
+        """Constructs an Enemy from its data slug, scaled from its base level to ``level``."""
         if slug not in self.enemies:
             raise KeyError(f"Enemy with slug '{slug}' not found in data/enemies.json")
         data = self.enemies[slug]
+        base_level = int(data.get("level", 1))
+        level = base_level if level is None else int(level)
+        rates = scaling_rates(self.settings, data.get("growth"))
         return Enemy(
             name=data["name"],
-            stats=dict(data.get("stats", {})),
+            stats=scale_stats(data.get("stats", {}), base_level, level, rates),
             tags=list(data.get("tags", [])),
             enemy_id=slug,
             category=data.get("category", "Normal"),
-            level=int(data.get("level", 1)),
+            level=level,
             intro=data.get("intro", ""),
             abilities=list(data.get("abilities", [])),
             loot_table=list(data.get("loot_table", [])),
@@ -118,7 +128,7 @@ class DataLoader:
             inventory=dict(data.get("starting_items", {})),
             class_name=class_name,
             gold=int(data.get("gold", 0)),
-            growth=dict(data.get("growth", {})),
+            stat_weights=dict(data.get("stat_weights", {})),
             basic_attack=data.get("basic_attack", "1.0*STR"),
             basic_attack_type=data.get("basic_attack_type", "PHYSICAL"),
             derived_formulas={**self.settings.get("player", {}).get("derived_stats", {}), **data.get("derived_stats", {})},
@@ -193,6 +203,9 @@ class DataLoader:
         # Enemies: abilities, cooldown maps, scripts, loot
         for slug, data in self.enemies.items():
             where = f"enemy:{slug}"
+            for stat, rate in data.get("growth", {}).items():
+                if not is_known_stat(stat) or not isinstance(rate, (int, float)):
+                    diags.append(Diagnostic("error", f"growth {stat!r} must be a stat with a numeric rate", source=where))
             enemy = self.build_enemy(slug)
             owned = enemy.ability_ids()
             for entry in data.get("abilities", []):
@@ -231,9 +244,11 @@ class DataLoader:
             error = validate_formula(data.get("basic_attack", "1.0*STR"), is_known_stat)
             if error:
                 diags.append(Diagnostic("error", f"basic_attack: {error}", source=where))
-            for stat in data.get("growth", {}):
-                if not is_known_stat(stat):
-                    diags.append(Diagnostic("error", f"growth stat {stat!r} is not a stat", source=where))
+            for stat, weight in data.get("stat_weights", {}).items():
+                if stat not in PRIMARY_STATS or weight < 0:
+                    diags.append(Diagnostic("error", f"stat_weights: {stat!r} must be a primary stat with weight >= 0", source=where))
+            if "max_health" in data.get("stats", {}) and "max_health" in formulas_for(self, cls_name):
+                diags.append(Diagnostic("warning", "stats.max_health is ignored: Max HP is derived (use base_hp / hp_bonus)", source=where))
 
         formulas = [("settings", k, f) for k, f in self.settings.get("player", {}).get("derived_stats", {}).items()]
         formulas += [(f"class:{c}", k, f) for c, d in self.starting_classes.items() for k, f in d.get("derived_stats", {}).items()]
@@ -263,6 +278,9 @@ class DataLoader:
                 for slug in event.get("enemies", []):
                     if slug not in self.enemies:
                         diags.append(Diagnostic("error", f"unknown enemy {slug!r}", source=f"{section}:{key}"))
+                for slug in event.get("levels", {}):
+                    if slug not in event.get("enemies", []):
+                        diags.append(Diagnostic("error", f"levels names {slug!r}, which is not in enemies", source=f"{section}:{key}"))
         return diags
 
     def _validate_effects(self, effects: list[dict[str, Any]], where: str) -> list[Diagnostic]:
