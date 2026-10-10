@@ -209,3 +209,8 @@ __marimo__/
 # Game saves
 saves/*
 !saves/.gitkeep
+
+# macOS & Editor metadata
+.DS_Store
+*/.DS_Store
+.forge/
