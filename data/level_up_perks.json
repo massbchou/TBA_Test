@@ -81,7 +81,8 @@
             "name": "Light Fingers",
             "description": "Learn Collector's Strike (hit and steal gold).",
             "repeatable": false,
-            "effects": [{"type": "learn_action", "action_id": "collect"}]
+            "effects": [{"type": "learn_action", "action_id": "collect"}],
+            "requires": {"class": ["Warrior", "Martial Artist"]}
         },
         {
             "perk_id": "blood_pact",

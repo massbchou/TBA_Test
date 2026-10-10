@@ -144,9 +144,9 @@
         "tags": ["mid", "humanoid", "dusk"],
         "intro": "A Hollow shuffles toward you, murmuring the name of a village that no longer exists.",
         "stats": {
-            "str": 14,
-            "max_health": 52,
-            "speed": 100,
+            "str": 13,
+            "max_health": 50,
+            "speed": 90,
             "defense": 3,
             "exp_reward": 42,
             "light_resistance": -50,
@@ -560,7 +560,7 @@
             "speed": 120,
             "defense": 4,
             "exp_reward": 400,
-            "fire_resistance": -50,
+            "fire_resistance": -25,
             "dark_resistance": 60
         },
         "abilities": [

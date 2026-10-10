@@ -31,9 +31,12 @@ def _schedule(line: ActionLine, index: int, ctx: ExecutionContext) -> None:
     def fire() -> None:
         if not ctx.caster.is_alive():
             return
-        run_line(line, ctx)
-        if blocking:
-            run_program(ctx, index + 1)
+        # Delayed effects land on someone else's turn; tag their narration with the action's name.
+        tag = ctx.action.name if ctx.action is not None else "Delayed"
+        with ctx.battle.narration_tag(tag):
+            run_line(line, ctx)
+            if blocking:
+                run_program(ctx, index + 1)
 
     ctx.result.lines.append(LineResult(line.number, line.verb, delayed=True))
     amount = ctx.eval_amount(line.delay.amount)

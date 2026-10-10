@@ -34,7 +34,10 @@
     },
     "pre_boss_rest": true,
     "shop": {
-      "stock_size": 4
+      "stock_size": 4,
+      "always": [
+        "waybread"
+      ]
     }
   },
   "combat": {
@@ -82,8 +85,8 @@
         "max_level": 6,
         "regular_combat": {
           "enemy_count_weights": {
-            "1": 55,
-            "2": 45
+            "1": 65,
+            "2": 35
           },
           "enemy_tags": [
             "mid"

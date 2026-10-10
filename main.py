@@ -129,6 +129,8 @@ def main(argv: list[str] | None = None) -> None:
             chosen_event.is_mystery = False
             print(f"   The fog parts... {chosen_event.get_choice_label()}")
 
+        if current_floor >= max_prototype_floor:
+            combat_system.perk_manager = None  # the run ends after this fight; perk choices would be moot
         event_success = chosen_event.execute(game_state, combat_system)
         if not event_success:
             print(f"\nYour journey comes to an end on Floor {current_floor}.")
@@ -149,7 +151,7 @@ def main(argv: list[str] | None = None) -> None:
     print_run_summary(game_state, outcome, loader)
 
     print("\n" + "=" * 60)
-    print("                        GAME OVER                          ")
+    print("                         THE END" if outcome == "cleared" else "                        GAME OVER")
     print("=" * 60)
 
 

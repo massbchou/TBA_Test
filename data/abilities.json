@@ -58,10 +58,10 @@
     "drain_palm": {
         "id": 114,
         "name": "Drain Palm",
-        "description": "Strike and draw strength from the blow: heals half the damage dealt.",
+        "description": "Strike and draw strength from the blow: heals a third of the damage dealt.",
         "tags": ["martial", "offensive", "healing"],
         "costs": {"stamina": 10},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 0.9*DEX PHYSICAL\nHEAL SELF 2+PREVIOUS_DAMAGE_DEALT/2"
+        "action_string": "DAMAGE 1_ENEMY CHOICE 0.9*DEX PHYSICAL\nHEAL SELF 2+PREVIOUS_DAMAGE_DEALT/3"
     },
     "rebuke": {
         "id": 121,
@@ -160,7 +160,7 @@
         "description": "",
         "tags": ["enemy"],
         "costs": {},
-        "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS SPEED 25 2_TURNS"
+        "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS SPEED 15 2_TURNS"
     },
     "e_rend": {
         "id": 910,

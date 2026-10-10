@@ -1,8 +1,115 @@
-# Prototype Friction Log: Octopath Traveler Content Pass
+# Content Log
+
+This log records content passes, playtest results, and what manual play found. Newest pass first.
+
+---
+
+## Pass 2: The Lantern Road (2026-10-10)
+
+**Branch:** `feat/content-pass` · **Plan:** content improvement plan (holes and bugs, dull areas, new
+features).
+
+### What changed
+- **Setting.** An original setting replaces the Octopath name bank ([docs/world.md](../world.md)).
+- **Classes.** Cut from 8 to 4 classic roles: Warrior, Martial Artist, Priest, Mage. Each has a combo
+  kit (Sunder → Heavy Blow, Mark → Finishing Strike) and per-level growth.
+- **Enemies.**
+  - 15 normal and special enemies in early/mid/late floor bands, each with a gimmick and an intro line.
+  - 3 elites and 3 preconstructed ordeals.
+  - 2 phased bosses with telegraphed attacks.
+- **Events and progression.** 13 occurrences (requirements, chance outcomes, event fights, class-only
+  choices); 9 shop items; 16 class-aware perks.
+- **Features.** Waystation shop, a camp between floors, save/load, name prompt, run summary.
+
+### Playtest (heuristic policy, 300 runs per class, `python3 tools/playtest.py`)
+
+| Class | Avg floor | Boss reached | Clear rate | Level at boss (mode) | Skill share | 1-dmg hits |
+|:---|---:|---:|---:|---:|---:|---:|
+| Warrior | 9.7 | 88% | 48% | 4 | 83% | 1.0% |
+| Martial Artist | 9.3 | 81% | 59% | 4 | 83% | 1.5% |
+| Priest | 9.3 | 76% | 59% | 4 | 99% | 1.5% |
+| Mage | 9.5 | 81% | 56% | 4 | 90% | 1.4% |
+
+All Phase 4 targets are met:
+- boss reached ≥ 60%;
+- clear rate 25–60%;
+- level 4–5 at the boss;
+- skill share ≥ 35%;
+- fewer than 3% 1-damage hits;
+- average floor ≥ 6.
+
+The Attack-only policy clears **0%** for every class, so the kits matter. Before this pass, the seed
+content's 8 classes cleared 0–13%, reached the boss at level 1–2, and barely used skills.
+
+### Manual playtest notes
+
+The four runs were played turn by turn at the console. The aggregate tool missed most of these
+findings; all are fixed unless marked otherwise.
+
+**Run 1 (Priest, seed 101): cleared the Mother of Moths at 17 HP. Saved mid-run and continued.**
+- An event whose only usable choice was "decline" wasted a floor, and was offered again two floors
+  later. → Occurrences need ≥ 2 usable choices to be offered.
+- "You restore 0 STAMINA, 0 MANA" and "recovers 0 HP" messages. → Zero amounts are not narrated.
+- REGEN "afflicted" the Priest. → Buffs read "gains".
+- Raw keys `MAX_HEALTH` and `stout_heart` appeared in text. → Readable stat and perk names.
+- A "GAME OVER" banner appeared after Save and quit. → A save-and-quit ending message.
+- No skill descriptions in combat menus. → Added.
+- CHA was a dead stat. → It now discounts shop prices; added a Silver Tongue perk.
+- The same enemy was offered on three floors running. → Last floor's (and this floor's) enemies are
+  avoided.
+- Gold stolen by thieves was simply lost. → Defeating the thief returns it.
+
+**Run 2 (Warrior, seed 202): died on floor 4. Found the worst bug of the pass.**
+- **Stacked speed debuffs locked the player out of the fight.** Two Hollows stacked −25 Speed per hit
+  until the Warrior got 1 turn per ~25 enemy turns. → Repeat modifiers from the same action refresh
+  instead of stacking (unless tagged `stacks`), and turn speed has a 50% floor.
+- The sparring "big man" was a pickpocketing Road Bandit. → A dedicated Pit Brawler.
+- Fights started from events had no intro text. → Intros print for every fight.
+- DEX/INT/WIS perks were offered to classes that don't use them. → Perks are class-filtered.
+- The camp menu didn't show HP, so heals got wasted. → HP and gold in the camp prompt.
+
+**Run 3 (Mage, seed 303): died to two Hollows on the first attempt; cleared on the replay.**
+- Weaknesses were invisible, so the player can't know Hollows burn. → The first hit on a weakness or
+  resistance announces it.
+- The intro printed inside the combat header and was duplicated for identical enemies; two enemies
+  were both called "Hollow". → Intros print once, before the banner; duplicates become Hollow A / B.
+- "You lose 18 HP" printed before the text explaining why. → Flavour first (except after event
+  fights).
+- Mend (a known heal) couldn't be cast at camp. → Camp "Use a skill" for skills marked
+  `usable_outside_combat`.
+- Learning a technique shifted the Mage's Cast menu number. → The class's main category is listed
+  first.
+- A shop had no healing items; Antivenom was usable at camp, where it does nothing. → Waybread is
+  always stocked; Antivenom is combat-only.
+- A fire-weak Mage melted the Mother of Moths in 4 turns; three perk prompts followed the final boss.
+  → Weakness reduced to −25%; no perk prompts after the final fight; a "THE END" banner.
+
+**Run 4 (Martial Artist, seed 404): bad inputs on purpose.**
+- Invalid numbers, letters and an empty name are all handled.
+- Fleeing works; locked purchases can't be selected; the Mark → Finisher combo works.
+- The same battle was offered twice on one floor. → No identical regular battles on a floor.
+
+**Boss review (Warrior vs the Ashgate Warden):** lost with the Warden on 1 HP. A good fight.
+- The delayed Lantern-Eater damage printed inside the player's turn, as if self-inflicted. → Delayed
+  effects are tagged (`[Lantern-Eater] …`).
+- "Brace yourself!" was wrong, because Defend doesn't reduce DARK. → The telegraph now says "heal up
+  or finish it now".
+
+### Open items
+- The weakness hint repeats once per enemy instance, not once per enemy type per run.
+- Event prices (peddler, scribe) ignore the CHA discount; only shops apply it.
+- A rest stop can still be offered at full HP (only floor 1 is excluded).
+- Some event stat rewards (e.g. the hermit's +3 INT) are off-class for some players.
+- Enemy-only actions still live in the player action files (friction A7 from Pass 1).
+
+---
+
+## Pass 1: Octopath-seeded prototype
+
 
 **Date:** 2026-10-10 · **Branch:** `feat/octopath-prototype-content`
 
-## Goal
+### Goal
 
 Populate the engine with a first-pass game inspired by *Octopath Traveler* (2018). Then find where the
 engine and data formats are clunky by **authoring content without changing the engine**.
@@ -10,7 +117,7 @@ engine and data formats are clunky by **authoring content without changing the e
 Content was written only as JSON. Anything the data could not express is logged here, not worked
 around in code.
 
-## What was built
+### What was built
 
 | Area | Content |
 |:---|:---|
@@ -24,7 +131,7 @@ around in code.
 The previous goblin/troll content now lives in `tests/fixtures/` and is used by the engine tests, so
 editing game content can no longer break them.
 
-### How Octopath's systems were mapped
+#### How Octopath's systems were mapped
 
 - **Weaknesses** map to negative resistances (`sword_resistance: -50` → 1.5× damage). This works well.
 - **Weapon types** (SWORD, SPEAR, DAGGER, AXE, BOW, STAFF) became damage types, used alongside the
@@ -33,7 +140,7 @@ editing game content can no longer break them.
   spec's Defensive Charge example.
 - **Drain** (HP Thief, Blood Drain) uses `HEAL SELF PREVIOUS_DAMAGE_DEALT/2`. This works well.
 
-## Playtest results
+### Playtest results
 
 The harness ran 300 seeded runs per class, floors 1–10, under three play styles. To reproduce:
 
@@ -65,11 +172,11 @@ level 2.
 
 ---
 
-## Findings
+### Findings
 
 Severity: **🔴 blocks a core Octopath mechanic** · **🟠 forces a clunky workaround** · **🟡 polish**.
 
-### A. Engine expressiveness: what the data could not say
+#### A. Engine expressiveness: what the data could not say
 
 | # | Sev | Finding | Evidence | Suggested direction |
 |:---|:---|:---|:---|:---|
@@ -85,7 +192,7 @@ Severity: **🔴 blocks a core Octopath mechanic** · **🟠 forces a clunky wor
 | A10 | 🟡 | **No multi-stat buffs.** Sheltering Veil needs six `BUFF` lines, one per element. | `spells.json` → `sheltering_veil`. | Allow `BUFF SELF ALL_RESISTANCES 30 3_TURNS`, or let a stat list (`fire,ice,…`) be one token. |
 | A11 | 🟡 | **`starting_classes` ignores `gold`.** The Merchant can't start rich. | `build_player` doesn't read a gold field. | Read `gold` (and any other `Player` field) from the class data. |
 
-### B. Occurrences and progression
+#### B. Occurrences and progression
 
 | # | Sev | Finding | Evidence | Suggested direction |
 |:---|:---|:---|:---|:---|
@@ -94,7 +201,7 @@ Severity: **🔴 blocks a core Octopath mechanic** · **🟠 forces a clunky wor
 | B3 | 🟠 | **Occurrences can't start a fight.** Provoke and Challenge should trigger combat. | "Challenge him" just prints flavour text. | A `combat` effect type that runs `Combat` with listed enemies. |
 | B4 | 🟠 | **Levelling is weak and slow.** There's no stat growth per level, only one perk, and players reach the boss at level 1–2. | Level-at-boss distribution above. | Per-class growth tables applied on level-up, and/or a faster EXP curve. |
 
-### C. Combat UX and readability
+#### C. Combat UX and readability
 
 | # | Sev | Finding | Evidence | Suggested direction |
 |:---|:---|:---|:---|:---|
@@ -103,7 +210,7 @@ Severity: **🔴 blocks a core Octopath mechanic** · **🟠 forces a clunky wor
 | C3 | 🟠 | **Hidden state.** `SET` narrates nothing, so a boss's "Gathering Inferno" charge is invisible until it lands. Buff/debuff *expiry* is silent (only statuses announce wearing off). Turn order and speed changes are never shown. Weaknesses are invisible, so there's no Analyze. | Guardian of the First Flame. | Optional `"message"` field on actions; narrate modifier expiry; a turn-order preview line; an Analyze-style reveal. |
 | C4 | 🟡 | **Flat Defense subtraction makes weak hits feel bad.** In Cleric runs, 12% of all hits (both sides) dealt exactly 1 damage. The Cleric's staff attack (6.4) against Defense 3–5 is the main source. | 1,447 of 12,393 hits (heuristic, 300 runs). | Percentage mitigation (e.g. `dmg × 100/(100+def×k)`) instead of subtraction. |
 
-### D. Balance (data only, no engine change needed)
+#### D. Balance (data only, no engine change needed)
 
 - **Bosses are a wall.** They have 240–260 HP and hit for 11–17 plus 8%-of-max-HP poison, against one
   level-1 character. Coverage is thin: each boss's weaknesses are hit by 1–2 classes. Fixing this mostly
@@ -116,7 +223,7 @@ Severity: **🔴 blocks a core Octopath mechanic** · **🟠 forces a clunky wor
 - **Elites can appear on floor 1.** `rules_by_level_range` allows Elite ordeals at levels 1–5. The
   Lizardman Warband and Bandit Ambush are the leading non-boss killers.
 
-## Recommended order
+### Recommended order
 
 1. **B1** (exploit) and **C1** (dead-end menu): small, high value.
 2. **A4** (damage category vs type) and **C2**/**C3** narration: cheap; they make the weakness game

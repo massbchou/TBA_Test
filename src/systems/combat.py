@@ -95,11 +95,15 @@ class Combat:
         )
         self.battle = battle
 
+        self._label_duplicates(self.enemies)
+        intros = []
+        for enemy in self.enemies:
+            if enemy.intro and enemy.intro not in intros:
+                intros.append(enemy.intro)
+        for intro in intros:
+            self.narrate(f"  {intro}")
         self.narrate("\n================== COMBAT STARTS ==================")
         self.narrate(f"Hero: {self.player.name} (HP: {self.player.health}/{self.player.get_stat('max_health')}, Speed: {self.player.get_stat('speed')})")
-        for enemy in self.enemies:
-            if enemy.intro:
-                self.narrate(f"  {enemy.intro}")
         for enemy in self.enemies:
             self.narrate(f"Enemy: {enemy.name} (HP: {enemy.health}/{enemy.get_stat('max_health')}, Speed: {enemy.get_stat('speed')})")
 
@@ -160,6 +164,19 @@ class Combat:
             return CombatResult.FLED
         return CombatResult.VICTORY
 
+    @staticmethod
+    def _label_duplicates(enemies: list[Enemy]) -> None:
+        """Give identical enemies distinct names (Hollow A, Hollow B) so targets are unambiguous."""
+        counts: dict[str, int] = {}
+        for enemy in enemies:
+            counts[enemy.name] = counts.get(enemy.name, 0) + 1
+        seen: dict[str, int] = {}
+        for enemy in enemies:
+            if counts[enemy.name] > 1:
+                index = seen.get(enemy.name, 0)
+                seen[enemy.name] = index + 1
+                enemy.name = f"{enemy.name} {chr(ord('A') + index)}"
+
     def _turn_speed(self, actor: Character) -> int:
         """Speed used for turn cost. Debuffs can't push it below ``min_speed_fraction`` of base speed,
         so stacked slows can never lock a character out of the fight."""
@@ -209,10 +226,11 @@ class Combat:
             self.narrate("  vs " + self._status_line(enemy))
 
         menu = ["Attack", "Defend"]
-        if player.abilities:
-            menu.append("Technique")
-        if player.spells:
-            menu.append("Cast")
+        # The category with more known actions comes first, so learning one off-class skill
+        # appends a menu entry instead of shifting the numbers the player is used to.
+        categories = [("Technique", player.abilities), ("Cast", player.spells)]
+        categories.sort(key=lambda c: -len(c[1]))
+        menu += [name for name, known in categories if known]
         menu.append("Bag" if self._usable_items() else "Bag (empty)")  # always shown, so numbering stays stable
         menu.append("Run")
 

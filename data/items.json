@@ -46,7 +46,7 @@
         "tags": ["consumable", "shop", "cure"],
         "price": 12,
         "usable_in_combat": true,
-        "usable_outside_combat": true,
+        "usable_outside_combat": false,
         "action_string": "CLEANSE SELF POISON\nCLEANSE SELF BURN"
     },
     "firepot": {

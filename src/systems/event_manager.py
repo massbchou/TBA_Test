@@ -22,6 +22,7 @@ class EventManager:
         self.settings = data_loader.settings
         self.rng = rng or get_rng()
         self._recent_enemies: set[str] = set()
+        self._floor_enemies: set[str] = set()
         self._player = None
 
     def generate_choices(self, game_state: GameState) -> list[Event]:
@@ -41,6 +42,7 @@ class EventManager:
             return [self._generate_boss_event(level)]
 
         self._player = game_state.player
+        self._floor_enemies = set()
         excluded = game_state.recently_offered() | set(game_state.used_once)
         offered: set[str] = set()
         choices: list[Event] = []
@@ -101,9 +103,10 @@ class EventManager:
 
     def _shop_stock(self) -> list[str]:
         cfg = self.settings.get("events", {}).get("shop", {})
-        pool = [a.id for a in self.data_loader.actions.all() if a.has_tag("shop") and a.price > 0]
-        size = min(int(cfg.get("stock_size", 4)), len(pool))
-        return sorted(self.rng.sample(pool, size), key=lambda i: self.data_loader.actions[i].price)
+        always = [i for i in cfg.get("always", []) if i in self.data_loader.actions]
+        pool = [a.id for a in self.data_loader.actions.all() if a.has_tag("shop") and a.price > 0 and a.id not in always]
+        size = max(0, min(int(cfg.get("stock_size", 4)) - len(always), len(pool)))
+        return sorted(always + self.rng.sample(pool, size), key=lambda i: self.data_loader.actions[i].price)
 
     def _get_combat_rules_for_level(self, level: int) -> dict[str, Any] | None:
         rules_list = self.settings.get("combat", {}).get("rules_by_level_range", [])
@@ -123,10 +126,11 @@ class EventManager:
         num_enemies = int(weighted_choice(count_weights, rng=self.rng) or 1)
 
         candidates = self._band_candidates(rules, "Normal")
-        fresh = [c for c in candidates if c not in self._recent_enemies]
-        candidates = fresh or candidates  # avoid offering last floor's enemies again when possible
+        fresh = [c for c in candidates if c not in self._recent_enemies | self._floor_enemies]
+        candidates = fresh or candidates  # avoid repeating last floor's (or this floor's) enemies when possible
 
         chosen_slugs = self.rng.choices(candidates, k=num_enemies)
+        self._floor_enemies |= set(chosen_slugs)
         encounter = [self.data_loader.build_enemy(slug) for slug in chosen_slugs]
         names = ", ".join(e.name for e in encounter)
 

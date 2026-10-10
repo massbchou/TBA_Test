@@ -32,11 +32,26 @@ def damage(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
         lr.amounts[target.name] = lr.amounts.get(target.name, 0) + dealt
         total += dealt
         battle.narrate(f"  {target.name} takes {dealt} {dtype} damage. (HP {_hp(target)})")
+        _reveal_affinity(battle, target, dtype)
         if not target.is_alive():
             battle.on_defeat(target)
         elif dealt > 0:
             battle.emit("on_damage_taken", target)
     ctx.previous_damage_dealt = total
+
+
+def _reveal_affinity(battle, target: "Character", dtype: str) -> None:
+    """The first time a damage type hits a weakness or resistance, say so: players learn
+    affinities by playing instead of guessing."""
+    resistance = target.get_stat(f"{dtype.lower()}_resistance")
+    if not resistance:
+        return
+    seen = target.__dict__.setdefault("_revealed_affinities", set())
+    if dtype in seen:
+        return
+    seen.add(dtype)
+    kind = "is weak to" if resistance < 0 else "resists"
+    battle.narrate(f"  {target.name} {kind} {dtype.lower()}!")
 
 
 @register_command("HEAL", ["amount"])

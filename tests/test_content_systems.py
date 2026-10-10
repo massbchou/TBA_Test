@@ -253,3 +253,69 @@ class TestSaveLoad(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestManualRunFixes(Base):
+    """Regressions for issues found in manual playtests."""
+
+    def test_camp_can_cast_healing_skills(self):
+        self.loader.spells["mend"] = {"name": "Mend", "description": "Heal.", "costs": {"mana": 5},
+                                      "usable_outside_combat": True, "action_string": "HEAL SELF 30"}
+        from src.systems.actions.definitions import ActionRegistry
+        self.loader.actions = ActionRegistry.build(self.loader.abilities, self.loader.spells, self.loader.items)
+        self.player.spells = ["mend"]
+        self.player.resources["mana"].current = 5
+        self.player.health = 50
+        state = GameState(self.player, self.loader.settings)
+        camp = Camp(self.combat(["Use a skill", "Mend", "Continue"]), narrator=lambda s: None)
+        self.assertEqual(camp.visit(state), CONTINUE)
+        self.assertEqual((self.player.health, self.player.resources["mana"].current), (80, 0))
+        self.assertEqual(camp.usable_skills(state), [])  # can't afford a second cast
+
+    def test_primary_category_listed_first(self):
+        menus = []
+
+        class Recording(ScriptedInput):
+            def choose(self, prompt, options):
+                menus.append(list(options))
+                return super().choose(prompt, options)
+
+        self.player.abilities, self.player.spells = ["heavy_slam"], ["fireball", "minor_heal"]
+        combat = Combat(self.player, self.loader.settings, self.loader, input_provider=Recording(["Attack"]),
+                        rng=random.Random(0), narrator=lambda s: None)
+        combat.run([make_enemy(max_health=1, speed=1)])
+        self.assertEqual(menus[0][:4], ["Attack", "Defend", "Cast", "Technique"])
+
+    def test_shop_always_stocks_listed_items(self):
+        settings = copy.deepcopy(self.loader.settings)
+        settings["events"]["shop"] = {"stock_size": 1, "always": ["health_potion"]}
+        self.loader.settings = settings
+        em = EventManager(self.loader, random.Random(3))
+        self.assertEqual(em._shop_stock(), ["health_potion"])
+
+    def test_no_identical_battles_on_one_floor(self):
+        settings = copy.deepcopy(self.loader.settings)
+        settings["events"]["distributions"] = {"regular": {"regular_combat": 1}, "mystery": {"regular_combat": 1}}
+        settings["events"].update(next_event_choices=1, mystery_choices=1)  # fixture has 2 Normal enemies
+        self.loader.settings = settings
+        for seed in range(20):
+            em = EventManager(self.loader, random.Random(seed))
+            names = [e.display_name for e in em.generate_choices(GameState(self.player, settings))]
+            self.assertEqual(len(names), len(set(names)), names)
+
+    def test_affinity_hint_and_duplicate_labels(self):
+        p = make_player()
+        a, b = make_enemy("Hollow", fire_resistance=-50), make_enemy("Hollow")
+        Combat._label_duplicates([a, b])
+        self.assertEqual((a.name, b.name), ("Hollow A", "Hollow B"))
+        battle = make_battle(p, [a, b])
+        run(battle, p, "DAMAGE ALL_ENEMIES 10 FIRE")
+        run(battle, p, "DAMAGE ALL_ENEMIES 10 FIRE")
+        self.assertEqual(battle.messages.count("  Hollow A is weak to fire!"), 1)
+        self.assertFalse(any("Hollow B is weak" in m for m in battle.messages))
+
+    def test_result_text_before_effects_except_after_fights(self):
+        state = GameState(self.player, self.loader.settings)
+        event = self.occurrence({"Slip": {"result_text": "You fall.", "effects": [{"type": "hurt", "amount": 5}]}})
+        _, out = quiet(event.execute, state, self.combat(["Slip"]))
+        self.assertLess(out.index("You fall."), out.index("You lose 5 HP"))

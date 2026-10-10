@@ -172,8 +172,16 @@ class OccurrenceEvent(Event):
         elif "choices" in data:
             return self._resolve(data["choices"], game_state, combat_system)
         else:
-            if not self._apply(data.get("effects", []), game_state, combat_system):
+            effects = data.get("effects", [])
+            # Flavour first, then its mechanical consequences; after a fight the text is the aftermath.
+            text_after = any(e.get("type") == "combat" for e in effects)
+            if data.get("result_text") and not text_after:
+                print(data["result_text"])
+            if not self._apply(effects, game_state, combat_system):
                 return False
+            if data.get("result_text") and text_after:
+                print(data["result_text"])
+            return True
         if data.get("result_text"):
             print(data["result_text"])
         return True

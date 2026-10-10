@@ -2,10 +2,11 @@
     "mend": {
         "id": 201,
         "name": "Mend",
-        "description": "Heal 16+WIS HP and cure poison.",
+        "description": "Heal 16+WIS HP and cure poison. Usable at camp.",
         "tags": ["priest", "healing"],
         "costs": {"mana": 8},
-        "action_string": "HEAL SELF 16+WIS\nCLEANSE SELF POISON"
+        "action_string": "HEAL SELF 16+WIS\nCLEANSE SELF POISON",
+        "usable_outside_combat": true
     },
     "renewal": {
         "id": 202,
@@ -104,7 +105,7 @@
         "tags": ["enemy"],
         "costs": {},
         "action_string": "SET SELF charging true 1_TURN\nDELAY NONBLOCKING TURNS 1 IF SELF EXISTS_VARIABLE charging DAMAGE ALL_ENEMIES 2.2*INT DARK",
-        "message": "The Warden drinks the light from the air. Something terrible is coming. Brace yourself!"
+        "message": "The Warden drinks the light from the air. It will release it as a wave of darkness on its next turn - heal up or finish it now."
     },
     "e_dust_storm": {
         "id": 957,

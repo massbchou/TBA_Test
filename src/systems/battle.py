@@ -6,7 +6,8 @@ delay scheduler, the combat log and status hook dispatch.
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence
 
 from src.io.input_provider import AutoInput, InputProvider
 from src.rng import get_rng
@@ -86,6 +87,15 @@ class Battle:
             text = f"  [{self._narration_tag}] {text[2:]}"
         self.narrator(text)
 
+    @contextmanager
+    def narration_tag(self, tag: str) -> Iterator[None]:
+        """Prefixes narration with ``[tag]`` for effects that happen outside their source's turn."""
+        previous, self._narration_tag = self._narration_tag, tag
+        try:
+            yield
+        finally:
+            self._narration_tag = previous
+
     def is_physical(self, damage_type: str) -> bool:
         return damage_type.upper() in self.physical_types
 
@@ -132,7 +142,8 @@ class Battle:
                 if label not in faded:
                     faded.append(label)
         if faded:
-            self.narrate(f"  {char.name}'s {', '.join(faded)} wears off.")
+            listed = faded[0] if len(faded) == 1 else ", ".join(faded[:-1]) + " and " + faded[-1]
+            self.narrate(f"  {char.name}'s {listed} {'wears' if len(faded) == 1 else 'wear'} off.")
 
     # ------------------------------------------------------------- hooks
 
@@ -148,12 +159,11 @@ class Battle:
         if not script or self._hook_depth >= MAX_HOOK_DEPTH:
             return
         self._hook_depth += 1
-        previous_tag, self._narration_tag = self._narration_tag, status.name.replace("_", " ").title()
         try:
-            for _ in range(max(1, status.stacks)):
-                if not bearer.is_alive():
-                    break
-                self.orchestrator.execute_string(bearer, script, self, source=f"status:{status.name}")
+            with self.narration_tag(status.name.replace("_", " ").title()):
+                for _ in range(max(1, status.stacks)):
+                    if not bearer.is_alive():
+                        break
+                    self.orchestrator.execute_string(bearer, script, self, source=f"status:{status.name}")
         finally:
             self._hook_depth -= 1
-            self._narration_tag = previous_tag
