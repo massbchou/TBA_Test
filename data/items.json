@@ -1,34 +1,66 @@
 {
-    "health_potion": {
+    "healing_grape": {
         "id": 301,
-        "name": "Health Potion",
-        "description": "A vial of soothing red liquid that restores 35 HP.",
+        "name": "Healing Grape",
+        "description": "Restores 40 HP.",
         "tags": ["consumable", "healing"],
         "usable_in_combat": true,
-        "action_string": "HEAL SELF 35"
+        "action_string": "HEAL SELF 40"
     },
-    "fire_bomb": {
+    "healing_grape_bunch": {
         "id": 302,
-        "name": "Fire Bomb",
-        "description": "An incendiary flask dealing 25 Fire damage to all enemies.",
-        "tags": ["consumable", "fire", "offensive"],
+        "name": "Healing Grape (Bunch)",
+        "description": "Restores 100 HP.",
+        "tags": ["consumable", "healing"],
         "usable_in_combat": true,
-        "action_string": "DAMAGE ALL_ENEMIES 25 FIRE"
+        "action_string": "HEAL SELF 100"
     },
-    "stamina_tonic": {
+    "inspiriting_plum": {
         "id": 303,
-        "name": "Stamina Tonic",
-        "description": "A bitter draught that restores 25 Stamina.",
+        "name": "Inspiriting Plum",
+        "description": "Restores 20 Mana.",
         "tags": ["consumable"],
         "usable_in_combat": true,
-        "action_string": "RESTORE SELF STAMINA 25"
+        "action_string": "RESTORE SELF MANA 20"
     },
-    "antidote": {
+    "energizing_pomegranate": {
         "id": 304,
-        "name": "Antidote",
+        "name": "Energizing Pomegranate",
+        "description": "Restores 30 Stamina.",
+        "tags": ["consumable"],
+        "usable_in_combat": true,
+        "action_string": "RESTORE SELF STAMINA 30"
+    },
+    "herb_of_healing": {
+        "id": 305,
+        "name": "Herb of Healing",
         "description": "Cures poison.",
         "tags": ["consumable", "cure"],
         "usable_in_combat": true,
         "action_string": "CLEANSE SELF POISON"
+    },
+    "fire_soulstone": {
+        "id": 306,
+        "name": "Fire Soulstone",
+        "description": "Unleashes 30 Fire damage on all foes.",
+        "tags": ["consumable", "fire", "offensive"],
+        "usable_in_combat": true,
+        "action_string": "DAMAGE ALL_ENEMIES 30 FIRE"
+    },
+    "ice_soulstone": {
+        "id": 307,
+        "name": "Ice Soulstone",
+        "description": "Unleashes 30 Ice damage on all foes.",
+        "tags": ["consumable", "ice", "offensive"],
+        "usable_in_combat": true,
+        "action_string": "DAMAGE ALL_ENEMIES 30 ICE"
+    },
+    "lightning_soulstone": {
+        "id": 308,
+        "name": "Lightning Soulstone",
+        "description": "Unleashes 30 Lightning damage on all foes.",
+        "tags": ["consumable", "lightning", "offensive"],
+        "usable_in_combat": true,
+        "action_string": "DAMAGE ALL_ENEMIES 30 LIGHTNING"
     }
 }

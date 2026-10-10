@@ -1,42 +1,194 @@
 {
-    "heavy_slam": {
+    "level_slash": {
         "id": 101,
-        "name": "Heavy Slam",
-        "description": "A powerful blow that strikes a single foe.",
-        "tags": ["tier1", "physical", "offensive"],
-        "costs": {"stamina": 15},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*STR PHYSICAL"
+        "name": "Level Slash",
+        "description": "Sweep the blade through every foe.",
+        "tags": ["warrior", "sword", "offensive", "aoe"],
+        "costs": {"stamina": 14},
+        "action_string": "DAMAGE ALL_ENEMIES 0.8*STR SWORD"
     },
-    "shield_wall": {
+    "thousand_spears": {
         "id": 102,
-        "name": "Shield Wall",
-        "description": "Brace for impact, increasing your defense.",
-        "tags": ["tier1", "physical", "defensive"],
-        "costs": {"stamina": 10},
-        "action_string": "BUFF SELF DEFENSE 10 2_TURNS"
-    },
-    "multi_shot": {
-        "id": 103,
-        "name": "Multi-Shot",
-        "description": "Fire a volley of arrows at multiple enemies.",
-        "tags": ["tier2", "physical", "offensive", "ranged"],
+        "name": "Thousand Spears",
+        "description": "A flurry of spear thrusts at random foes.",
+        "tags": ["warrior", "spear", "offensive"],
         "costs": {"stamina": 20},
-        "action_string": "DAMAGE 2_ENEMIES RANDOM 1d6+DEX PHYSICAL"
+        "action_string": "DAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR\nDAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR\nDAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR\nDAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR"
     },
-    "quick_jab": {
-        "id": 104,
-        "name": "Quick Jab",
-        "description": "A fast, precise strike that scales with Dexterity.",
-        "tags": ["tier1", "physical", "offensive"],
-        "costs": {"stamina": 5},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 0.8*DEX PHYSICAL"
+    "abide": {
+        "id": 103,
+        "name": "Abide",
+        "description": "Steel yourself, raising Strength for 3 turns.",
+        "tags": ["warrior", "buff"],
+        "costs": {"stamina": 8},
+        "action_string": "BUFF SELF STR 4 3_TURNS"
     },
-    "smoke_screen": {
-        "id": 105,
-        "name": "Smoke Screen",
-        "description": "Blind your foes with smoke, slowing them for 2 turns.",
-        "tags": ["tier1", "debuff"],
-        "costs": {"stamina": 15},
-        "action_string": "DEBUFF ALL_ENEMIES SPEED 30 2_TURNS"
+    "rain_of_arrows": {
+        "id": 111,
+        "name": "Rain of Arrows",
+        "description": "Loose three arrows at random foes.",
+        "tags": ["hunter", "bow", "offensive"],
+        "costs": {"stamina": 16},
+        "action_string": "DAMAGE 1_ENEMY RANDOM 0.6*DEX BOW\nDAMAGE 1_ENEMY RANDOM 0.6*DEX BOW\nDAMAGE 1_ENEMY RANDOM 0.6*DEX BOW"
+    },
+    "true_strike": {
+        "id": 112,
+        "name": "True Strike",
+        "description": "A single, perfectly aimed shot.",
+        "tags": ["hunter", "bow", "offensive"],
+        "costs": {"stamina": 12},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.6*DEX BOW"
+    },
+    "leghold_trap": {
+        "id": 113,
+        "name": "Leghold Trap",
+        "description": "Snare a foe, slowing it for 3 turns.",
+        "tags": ["hunter", "debuff"],
+        "costs": {"stamina": 10},
+        "action_string": "DEBUFF 1_ENEMY CHOICE SPEED 40 3_TURNS"
+    },
+    "rest": {
+        "id": 121,
+        "name": "Rest",
+        "description": "Catch your breath: recover stamina and a little health.",
+        "tags": ["merchant", "recovery"],
+        "costs": {},
+        "action_string": "RESTORE SELF STAMINA 30\nHEAL SELF 10"
+    },
+    "wildfire": {
+        "id": 131,
+        "name": "Wildfire",
+        "description": "Scatter burning embers over every foe.",
+        "tags": ["thief", "fire", "offensive", "aoe"],
+        "costs": {"stamina": 16},
+        "action_string": "DAMAGE ALL_ENEMIES 0.7*DEX FIRE"
+    },
+    "shackle_foe": {
+        "id": 132,
+        "name": "Shackle Foe",
+        "description": "Bind a foe, lowering its Strength for 3 turns.",
+        "tags": ["thief", "debuff"],
+        "costs": {"stamina": 8},
+        "action_string": "DEBUFF 1_ENEMY CHOICE STR 5 3_TURNS"
+    },
+    "hp_thief": {
+        "id": 133,
+        "name": "HP Thief",
+        "description": "Stab a foe and drink half the wound.",
+        "tags": ["thief", "dagger", "offensive", "drain"],
+        "costs": {"stamina": 12},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.0*DEX DAGGER\nHEAL SELF PREVIOUS_DAMAGE_DEALT/2"
+    },
+    "first_aid": {
+        "id": 141,
+        "name": "First Aid",
+        "description": "Patch yourself up and treat ailments.",
+        "tags": ["apothecary", "healing"],
+        "costs": {"stamina": 10},
+        "action_string": "HEAL SELF 25+CON\nCLEANSE SELF ALL_DEBUFFS"
+    },
+    "amputation": {
+        "id": 142,
+        "name": "Amputation",
+        "description": "A brutal axe chop.",
+        "tags": ["apothecary", "axe", "offensive"],
+        "costs": {"stamina": 12},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.4*STR AXE"
+    },
+    "rehabilitate": {
+        "id": 143,
+        "name": "Rehabilitate",
+        "description": "A tonic that restores health each turn for 3 turns.",
+        "tags": ["apothecary", "healing"],
+        "costs": {"stamina": 10},
+        "action_string": "APPLY SELF REGEN 3_TURNS"
+    },
+    "lion_dance": {
+        "id": 151,
+        "name": "Lion Dance",
+        "description": "A fierce dance that raises Strength for 3 turns.",
+        "tags": ["dancer", "buff"],
+        "costs": {"stamina": 8},
+        "action_string": "BUFF SELF STR 5 3_TURNS"
+    },
+    "e_slash": {
+        "id": 901,
+        "name": "Slash",
+        "description": "",
+        "tags": ["enemy", "physical"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.2*STR PHYSICAL"
+    },
+    "e_bite": {
+        "id": 902,
+        "name": "Bite",
+        "description": "",
+        "tags": ["enemy", "physical"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL"
+    },
+    "e_venom_fang": {
+        "id": 903,
+        "name": "Venom Fang",
+        "description": "",
+        "tags": ["enemy", "physical", "poison"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 0.8*STR PHYSICAL\nAPPLY PREVIOUS_TARGETS POISON 3_TURNS"
+    },
+    "e_blood_drain": {
+        "id": 904,
+        "name": "Blood Drain",
+        "description": "",
+        "tags": ["enemy", "physical", "drain"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 0.8*STR PHYSICAL\nHEAL SELF PREVIOUS_DAMAGE_DEALT"
+    },
+    "e_drowsy_spores": {
+        "id": 905,
+        "name": "Drowsy Spores",
+        "description": "",
+        "tags": ["enemy", "debuff"],
+        "costs": {},
+        "action_string": "DEBUFF 1_ENEMY SPEED 30 2_TURNS"
+    },
+    "e_spear_thrust": {
+        "id": 906,
+        "name": "Spear Thrust",
+        "description": "",
+        "tags": ["enemy", "physical"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.4*STR PHYSICAL"
+    },
+    "e_war_cry": {
+        "id": 907,
+        "name": "War Cry",
+        "description": "",
+        "tags": ["enemy", "buff"],
+        "costs": {},
+        "action_string": "BUFF ALL_ALLIES STR 3 3_TURNS"
+    },
+    "e_tail_whip": {
+        "id": 908,
+        "name": "Tail Whip",
+        "description": "",
+        "tags": ["enemy", "physical"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.1*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS DEFENSE 3 2_TURNS"
+    },
+    "e_ember_shield": {
+        "id": 909,
+        "name": "Ember Shield",
+        "description": "",
+        "tags": ["enemy", "buff"],
+        "costs": {},
+        "action_string": "BUFF SELF DEFENSE 6 2_TURNS\nBUFF SELF ice_resistance 60 2_TURNS"
+    },
+    "e_constrict": {
+        "id": 910,
+        "name": "Constrict",
+        "description": "",
+        "tags": ["enemy", "physical", "debuff"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS SPEED 30 1_TURN"
     }
 }

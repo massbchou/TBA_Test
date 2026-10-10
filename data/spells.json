@@ -1,27 +1,106 @@
 {
-    "minor_heal": {
+    "heal_wounds": {
         "id": 201,
-        "name": "Minor Heal",
-        "description": "A simple spell that restores a small amount of health to an ally.",
-        "tags": ["tier1", "holy", "healing"],
-        "costs": { "mana": 10 },
-        "action_string": "HEAL 1_ALLY CHOICE 20-30"
+        "name": "Heal Wounds",
+        "description": "Restore health to every ally.",
+        "tags": ["cleric", "healing"],
+        "costs": {"mana": 8},
+        "action_string": "HEAL ALL_ALLIES 15+WIS"
+    },
+    "holy_light": {
+        "id": 202,
+        "name": "Holy Light",
+        "description": "Smite a foe with radiant light.",
+        "tags": ["cleric", "light", "offensive"],
+        "costs": {"mana": 10},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.4*WIS+5 LIGHT"
+    },
+    "sheltering_veil": {
+        "id": 203,
+        "name": "Sheltering Veil",
+        "description": "Ward yourself against the elements for 3 turns.",
+        "tags": ["cleric", "buff"],
+        "costs": {"mana": 12},
+        "action_string": "BUFF SELF fire_resistance 30 3_TURNS\nBUFF SELF ice_resistance 30 3_TURNS\nBUFF SELF lightning_resistance 30 3_TURNS\nBUFF SELF wind_resistance 30 3_TURNS\nBUFF SELF light_resistance 30 3_TURNS\nBUFF SELF dark_resistance 30 3_TURNS"
     },
     "fireball": {
-        "id": 202,
+        "id": 211,
         "name": "Fireball",
-        "description": "Hurl a ball of fire at all enemies.",
-        "tags": ["tier1", "fire", "offensive", "aoe"],
-        "costs": { "mana": 25 },
-        "action_string": "DAMAGE ALL_ENEMIES 2d10+INT FIRE"
+        "description": "Hurl a ball of fire at one foe.",
+        "tags": ["scholar", "fire", "offensive"],
+        "costs": {"mana": 10},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*INT FIRE"
     },
-    "poison_sting": {
-        "id": 203,
-        "name": "Poison Sting",
-        "description": "Sting an enemy, poisoning them for several turns.",
-        "tags": ["tier1", "poison", "debuff"],
-        "costs": { "mana": 15 },
-        "action_string": "APPLY 1_ENEMY CHOICE POISON 3_TURNS"
+    "icicle": {
+        "id": 212,
+        "name": "Icicle",
+        "description": "Impale one foe on a spike of ice.",
+        "tags": ["scholar", "ice", "offensive"],
+        "costs": {"mana": 10},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*INT ICE"
+    },
+    "lightning_bolt": {
+        "id": 213,
+        "name": "Lightning Bolt",
+        "description": "Call lightning down on one foe.",
+        "tags": ["scholar", "lightning", "offensive"],
+        "costs": {"mana": 10},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*INT LIGHTNING"
+    },
+    "tradewinds": {
+        "id": 221,
+        "name": "Tradewinds",
+        "description": "Batter a foe with a gale.",
+        "tags": ["merchant", "wind", "offensive"],
+        "costs": {"mana": 8},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.3*INT+4 WIND"
+    },
+    "night_ode": {
+        "id": 231,
+        "name": "Night Ode",
+        "description": "A mournful song that wounds one foe.",
+        "tags": ["dancer", "dark", "offensive"],
+        "costs": {"mana": 8},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.3*CHA DARK"
+    },
+    "moonlight_waltz": {
+        "id": 232,
+        "name": "Moonlight Waltz",
+        "description": "A dance of shadow over every foe.",
+        "tags": ["dancer", "dark", "offensive", "aoe"],
+        "costs": {"mana": 14},
+        "action_string": "DAMAGE ALL_ENEMIES 0.9*CHA DARK"
+    },
+    "e_fire_breath": {
+        "id": 951,
+        "name": "Fire Breath",
+        "description": "",
+        "tags": ["enemy", "fire"],
+        "costs": {},
+        "action_string": "DAMAGE ALL_ENEMIES 1.0*INT+6 FIRE"
+    },
+    "e_shaman_mend": {
+        "id": 952,
+        "name": "Mend",
+        "description": "",
+        "tags": ["enemy", "healing"],
+        "costs": {},
+        "action_string": "HEAL 1_ALLY CHOICE 20-30"
+    },
+    "e_inferno": {
+        "id": 953,
+        "name": "Gathering Inferno",
+        "description": "",
+        "tags": ["enemy", "fire", "charge"],
+        "costs": {},
+        "action_string": "SET SELF charging true 1_TURN\nDELAY NONBLOCKING TURNS 1 IF SELF EXISTS_VARIABLE charging DAMAGE ALL_ENEMIES 2.0*INT FIRE"
+    },
+    "e_poison_mist": {
+        "id": 954,
+        "name": "Poison Mist",
+        "description": "",
+        "tags": ["enemy", "poison"],
+        "costs": {},
+        "action_string": "APPLY ALL_ENEMIES POISON 3_TURNS"
     }
 }
-
