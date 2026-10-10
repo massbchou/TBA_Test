@@ -2,12 +2,11 @@
 import random
 import unittest
 
-from src.data_loader import DataLoader
 from src.io.input_provider import ScriptedInput
 from src.systems.actions.definitions import ActionRegistry
 from src.systems.battle import Battle
 from src.systems.combat import Combat, CombatResult
-from tests.helpers import make_enemy, make_player
+from tests.helpers import fixture_loader, make_enemy, make_player
 
 SETTINGS = {
     "combat": {"round_time_units": 12500, "reference_speed": 125, "stamina_regen_per_turn": 5,
@@ -35,8 +34,7 @@ def make_combat(player, answers, loader=None, settings=SETTINGS, seed=0):
 class TestPlayerActions(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.loader = DataLoader()
-        cls.loader.load_all()
+        cls.loader = fixture_loader()
 
     def test_technique_costs_stamina(self):
         warrior = self.loader.build_player("Warrior")

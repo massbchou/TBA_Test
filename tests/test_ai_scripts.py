@@ -1,11 +1,10 @@
 """Attack Script selection and execution."""
 import unittest
 
-from src.data_loader import DataLoader
 from src.systems.actions.definitions import ActionRegistry
 from src.systems.ai.script_parser import parse_script_line
 from src.systems.ai_controller import AIController
-from tests.helpers import make_battle, make_enemy, make_player
+from tests.helpers import fixture_loader, make_battle, make_enemy, make_player
 
 ABILITIES = {aid: {"name": aid, "action_string": "DAMAGE 1_ENEMY 1"} for aid in ("a", "b", "c", "slam", "wall")}
 
@@ -103,11 +102,10 @@ class TestScriptRunner(unittest.TestCase):
         self.assertIsNone(stmt.otherwise)
 
 
-class TestShippedEnemies(unittest.TestCase):
+class TestFixtureEnemies(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.loader = DataLoader()
-        cls.loader.load_all()
+        cls.loader = fixture_loader()
 
     def setUp(self):
         self.ai = AIController(self.loader)

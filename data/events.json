@@ -1,58 +1,165 @@
 {
     "occurrences": {
-        "healing_spring": {
+        "cobbleston_tavern": {
             "id": 3001,
-            "display_name": "A Healing Spring",
-            "description": "You find a serene spring. The water glows faintly.",
-            "tags": ["tier1", "occurrence", "reward"],
-            "choices": {
-                "Drink the water": {"result_text": "You feel refreshed and healed.", "effects": [{"type": "heal", "amount": 20}]},
-                "Leave it": {"result_text": "You decide not to risk it and move on.", "effects": []}
-            }
-        },
-        "strange_idol": {
-            "id": 3002,
-            "display_name": "A Strange Idol",
-            "description": "You find a small, unsettling idol carved from black stone. It seems to whisper to you.",
+            "display_name": "A Tavern in Cobbleston",
+            "description": "An old drinker swears he knows what lurks on the road ahead.",
             "tags": ["tier1", "occurrence"],
             "choices": {
-                "Pray to the idol.": {
-                    "description": "You kneel and offer a prayer. A chilling energy fills you, followed by a surge of power.",
+                "Buy him a drink and inquire (-15 gold)": {
+                    "result_text": "He sketches a crude map and presses a pair of grapes into your hand.",
+                    "effects": [
+                        {"type": "gold", "amount": -15},
+                        {"type": "item", "item_id": "healing_grape", "quantity": 2}
+                    ]
+                },
+                "Leave him to his cups": {"result_text": "You finish your water and move on.", "effects": []}
+            }
+        },
+        "rippletide_stall": {
+            "id": 3002,
+            "display_name": "A Market Stall in Rippletide",
+            "description": "A fishmonger has, inexplicably, a crate of soulstones.",
+            "tags": ["tier1", "occurrence"],
+            "choices": {
+                "Buy a Fire Soulstone (40 gold)": {
+                    "result_text": "The stone is warm to the touch.",
+                    "effects": [{"type": "gold", "amount": -40}, {"type": "item", "item_id": "fire_soulstone"}]
+                },
+                "Buy an Inspiriting Plum (25 gold)": {
+                    "result_text": "It smells of spring.",
+                    "effects": [{"type": "gold", "amount": -25}, {"type": "item", "item_id": "inspiriting_plum"}]
+                },
+                "Walk away": {"result_text": "You leave the fish to the gulls.", "effects": []}
+            }
+        },
+        "suspicious_noble": {
+            "id": 3003,
+            "display_name": "A Suspicious Noble",
+            "description": "A noble with a heavy purse glares at everyone who passes.",
+            "tags": ["tier1", "occurrence"],
+            "choices": {
+                "Pick his pocket (Steal)": {
+                    "result_text": "Your fingers find the purse. He never notices.",
+                    "effects": [{"type": "gold", "amount": 40}]
+                },
+                "Charm him (Allure)": {
+                    "result_text": "Flattered, he hands over a 'trinket' to be rid of you.",
+                    "effects": [{"type": "item", "item_id": "lightning_soulstone"}]
+                },
+                "Challenge him (Provoke)": {
+                    "result_text": "He declines with a sneer. Someone else will have to teach him manners.",
+                    "effects": []
+                }
+            }
+        },
+        "atlasdam_library": {
+            "id": 3004,
+            "display_name": "The Royal Library of Atlasdam",
+            "description": "Shelves of forbidden tomes stretch into the dark.",
+            "tags": ["tier1", "occurrence"],
+            "choices": {
+                "Study the Arcane Primer": {
+                    "result_text": "You emerge hours later, head throbbing but sharper.",
+                    "effects": [
+                        {"type": "stat_change", "stat": "int", "value": 2},
+                        {"type": "stat_change", "stat": "max_health", "value": -5}
+                    ]
+                },
+                "Read a Field Manual": {
+                    "result_text": "You learn a few tricks for staying alive.",
+                    "effects": [{"type": "stat_change", "stat": "con", "value": 1}]
+                }
+            }
+        },
+        "sacred_flame_shrine": {
+            "id": 3005,
+            "display_name": "A Shrine of the Sacred Flame",
+            "description": "A small flame burns here that has never gone out.",
+            "tags": ["tier1", "occurrence", "reward"],
+            "choices": {
+                "Kneel and pray": {
                     "result_text": "",
+                    "description": "Warmth floods through you. The flame flickers expectantly.",
                     "choices": {
-                        "Accept its dark gift (+2 STR, -10 Max HP)": {
-                            "result_text": "You feel stronger, but a part of your vitality is drained away.",
+                        "Offer a tithe (-20 gold)": {
+                            "result_text": "The flame flares in approval.",
                             "effects": [
-                                {"type": "stat_change", "stat": "str", "value": 2},
-                                {"type": "stat_change", "stat": "max_health", "value": -10}
+                                {"type": "gold", "amount": -20},
+                                {"type": "stat_change", "stat": "wis", "value": 2},
+                                {"type": "heal", "amount": 40}
                             ]
                         },
-                        "Reject the power": {
-                            "result_text": "You recoil from the unnatural feeling and leave the idol behind.",
-                            "effects": []
-                        }
+                        "Simply give thanks": {"result_text": "You rise, rested.", "effects": [{"type": "heal", "amount": 25}]}
                     }
                 },
-                "Smash the idol.": {"result_text": "You shatter the idol under your heel. The whispers cease.", "effects": []}
+                "Warm your hands and go": {"result_text": "You feel a little better.", "effects": [{"type": "heal", "amount": 10}]}
+            }
+        },
+        "abandoned_cart": {
+            "id": 3006,
+            "display_name": "An Abandoned Cart",
+            "description": "A merchant's cart lies overturned beside the road, its owner long gone.",
+            "tags": ["tier1", "occurrence", "reward"],
+            "choices": {
+                "Search the cart": {
+                    "result_text": "Among the debris you find coin and supplies.",
+                    "effects": [
+                        {"type": "gold", "amount": 30},
+                        {"type": "item", "item_id": "healing_grape", "quantity": 1},
+                        {"type": "item", "item_id": "energizing_pomegranate", "quantity": 1}
+                    ]
+                },
+                "Leave it be": {"result_text": "Some things are best left alone.", "effects": []}
+            }
+        },
+        "sunshade_stage": {
+            "id": 3007,
+            "display_name": "A Stage in Sunshade",
+            "description": "The tavern's dancer has fallen ill and the crowd is restless.",
+            "tags": ["tier1", "occurrence", "reward"],
+            "choices": {
+                "Take the stage": {
+                    "result_text": "The crowd roars. Coins rain down, and you leave with a new swagger.",
+                    "effects": [{"type": "gold", "amount": 25}, {"type": "stat_change", "stat": "cha", "value": 2}]
+                },
+                "Watch from the back": {
+                    "result_text": "You enjoy the show and a free meal.",
+                    "effects": [{"type": "heal", "amount": 20}]
+                }
             }
         }
     },
     "preconstructed_ordeals": {
-        "goblin_chieftain_ambush": {
+        "bandit_ambush": {
             "id": 4001,
-            "display_name": "Goblin Chieftain's Ambush",
-            "description": "A hulking goblin with a cruel-looking axe points at you. 'Get 'em, boys!'",
+            "display_name": "Bandit Ambush",
+            "description": "Masked figures step out from the trees. 'Your purse or your life.'",
             "tags": ["tier1", "ordeal"],
-            "enemies": ["goblin_shaman", "goblin", "goblin"]
+            "enemies": ["bandit_captain", "ruffian", "ruffian"]
+        },
+        "lizardman_warband": {
+            "id": 4002,
+            "display_name": "Lizardman Warband",
+            "description": "A chieftain in a bone crown hisses orders to his kin.",
+            "tags": ["tier1", "ordeal"],
+            "enemies": ["lizardman_chief", "lizardman", "sand_lizard"]
         }
     },
     "boss_events": {
-        "tier1_troll_lair": {
+        "flamesgrace_guardian": {
             "id": 5001,
-            "display_name": "Lair of the Troll",
-            "description": "The ground trembles as a massive Cave Troll emerges from the darkness!",
+            "display_name": "The Guardian of the First Flame",
+            "description": "The sacred flame rises from its brazier and takes shape. It will not let you pass.",
             "tags": ["tier1", "boss_event"],
-            "enemies": ["cave_troll"]
+            "enemies": ["guardian_of_the_first_flame"]
+        },
+        "clearbrook_viper": {
+            "id": 5002,
+            "display_name": "The Blotted Viper",
+            "description": "A serpent mottled with sickly purple uncoils from the cave mouth.",
+            "tags": ["tier1", "boss_event"],
+            "enemies": ["blotted_viper"]
         }
     }
 }

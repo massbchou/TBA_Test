@@ -2,17 +2,15 @@
 import random
 import unittest
 
-from src.data_loader import DataLoader
 from src.io.input_provider import ScriptedInput
 from src.systems.combat import Combat
-from tests.helpers import make_battle, make_enemy, make_player
+from tests.helpers import fixture_loader, make_battle, make_enemy, make_player
 
 
 class TestItems(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.loader = DataLoader()
-        cls.loader.load_all()
+        cls.loader = fixture_loader()
 
     def use(self, item_id, caster, enemies):
         battle = make_battle(caster, enemies)
@@ -62,8 +60,7 @@ class TestItems(unittest.TestCase):
         self.assertEqual(p.gold, 5)
 
     def test_unknown_loot_item_is_reported(self):
-        loader = DataLoader()
-        loader.load_all()
+        loader = fixture_loader()
         loader.enemies["goblin"]["loot_table"].append({"type": "item", "item_id": "nope", "chance": 1})
         messages = [d.message for d in loader.validate() if d.severity == "error"]
         self.assertTrue(any("unknown item 'nope'" in m for m in messages))

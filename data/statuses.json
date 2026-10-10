@@ -1,8 +1,14 @@
 {
     "POISON": {
-        "description": "Takes 4 POISON damage at the start of each of its turns.",
+        "description": "Loses 8% of max HP at the start of each of its turns.",
         "stacking": "refresh",
         "tags": ["debuff", "dot"],
-        "hooks": {"on_turn_start": "DAMAGE SELF 4 POISON"}
+        "hooks": {"on_turn_start": "DAMAGE SELF 1+0.08*MAX_HP POISON"}
+    },
+    "REGEN": {
+        "description": "Recovers 8 HP at the start of each of its turns.",
+        "stacking": "refresh",
+        "tags": ["buff"],
+        "hooks": {"on_turn_start": "HEAL SELF 8"}
     }
 }
