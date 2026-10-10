@@ -25,7 +25,8 @@ Boss encounters are special, challenging events that occur at fixed intervals, s
 * The EventManager class (event\_manager.py) is responsible for generating the choices for the next event, based on rules in settings.json.  
 * The number of event choices (next\_event\_choices) and mystery options (mystery\_choices) are defined in settings.json.  
 * The boss encounter rate (boss\_event\_interval) is also set in settings.json.  
-* Saving and loading functionality is handled by helper functions in utils.py.
+* Saving and loading is handled by `src/save_manager.py`: the camp menu offers "Save and quit", which writes `saves/<name>.json` (player, floor, event history and RNG state). A finished run deletes its save.
+* Between floors the **camp** (`src/systems/camp.py`) lets the player use items and camp-usable skills, review their character, or save and quit.
 
 ## **3\. The Player Character**
 
@@ -47,7 +48,7 @@ The player gains Experience (EXP) by completing events, primarily combat. Upon r
 
 The player character tracks two primary resources:
 
-* **Gold:** The main currency, used for shops and other events.  
+* **Gold:** The main currency, spent at waystation shops (CHA lowers prices) and on paid event choices. Road thieves steal it; defeating them returns it.  
 * **Inventory:** A list of items the player possesses.
 
 **Items** are defined in `data/items.json` and work like abilities: each item has an `action_string` and a `usable_in_combat` flag. The inventory maps item ids to stack sizes. Using an item runs its action and removes one from the stack. Using items outside combat is not implemented yet.
@@ -108,7 +109,7 @@ Events are the core content of the game, divided into five Tiers by default, cor
    * **Normal & Reward:** Present the player with a description and a numbered list of options. The pools of events are separate, with "Reward" occurrences generally offering better outcomes. These events can feature nested choices.  
    * **Rest:** A special event that allows the player to recover Health (a fraction set by `combat.rest_heal_fraction`) and fully restore Mana and Stamina. It will also feature a shop.
 
-*(TODO: Implement the shop functionality within the Rest event.)*
+Rest stops (waystations) offer **Rest**, which uses up the stop, and **Trade** with a merchant: buy at full price (minus a CHA discount) and sell at half. The floor before a boss always offers a rest stop.
 
 ### **Technical Implementation Notes**
 

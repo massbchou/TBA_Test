@@ -65,7 +65,13 @@ def make_battle(
     return battle
 
 
-def action(text: str, source: str = "spell", action_id: str = "test_action", **extra: Any) -> ActionDef:
+_ids = iter(range(1, 10**9))
+
+
+def action(text: str, source: str = "spell", action_id: str | None = None, **extra: Any) -> ActionDef:
+    """An ad-hoc action. Each call gets a unique id unless one is given, so modifiers from
+    separate calls stack the way separate actions would."""
+    action_id = action_id or f"test_action_{next(_ids)}"
     return ActionDef.from_data(action_id, {"name": action_id, "action_string": text, **extra}, source)
 
 

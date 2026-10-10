@@ -2,6 +2,10 @@
 
 A data-driven, turn-based text adventure roguelike RPG engine built in Python.
 
+The current content is **The Lantern Road**: a lone traveller walks west ahead of the Dusk, ten stretches
+of road to the gate at Ashgate. Four classes (Warrior, Martial Artist, Priest, Mage), a camp between
+floors, waystation shops, and saves. See [docs/world.md](docs/world.md).
+
 ## Quick Start
 
 Requires Python 3.10+.
@@ -76,12 +80,13 @@ fails on any parse error, dangling reference, or unknown effect type.
 
 | To add… | Edit | Notes |
 |:---|:---|:---|
-| Technique / spell | `data/abilities.json` / `data/spells.json` | `action_string` per [docs/action_system.md](docs/action_system.md); `costs` in stamina/mana |
-| Item | `data/items.json` | `action_string` + `usable_in_combat`; reference by slug in loot tables and `starting_items` |
-| Status effect | `data/statuses.json` | `stacking` + `hooks` (action strings run with the bearer as `SELF`) |
-| Enemy behaviour | `attack_scripts` in `data/enemies.json` | Syntax in [docs/ai_scripts.md](docs/ai_scripts.md) |
-| Occurrence | `data/events.json` | Choices hold `effects` lists or nested `choices` |
-| Perk | `data/level_up_perks.json` | `tierN` pools; `repeatable: false` for one-time perks |
+| Technique / spell | `data/abilities.json` / `data/spells.json` | `action_string` per [docs/action_system.md](docs/action_system.md); `costs` in stamina/mana; optional `message` (narrated on use, `{caster}` placeholder), `usable_outside_combat` (castable at camp), tag `stacks` (repeat buffs stack instead of refreshing) |
+| Item | `data/items.json` | `action_string`, `usable_in_combat`, `usable_outside_combat`, `price`; tag `shop` to appear in waystation shops (`settings.events.shop.always` guarantees stock) |
+| Status effect | `data/statuses.json` | `stacking` + `hooks` (action strings run with the bearer as `SELF`); tag `buff` or `debuff` |
+| Class | `data/starting_classes.json` | `stats`, `growth` (per level), `basic_attack` + `basic_attack_type`, optional `derived_stats` override (e.g. mana from WIS), kit and `starting_items` |
+| Enemy | `data/enemies.json` | Band tags `early`/`mid`/`late` pick the floors it appears on; `intro` line; weaknesses as negative `<type>_resistance`; `attack_scripts` per [docs/ai_scripts.md](docs/ai_scripts.md) |
+| Occurrence | `data/events.json` | Choices hold `effects`, nested `choices`, or `chance` with `success`/`failure`; gate with `requires` (`gold`, `class`, `item`, `stat`, `level`); effect types include `combat` (start a fight) and `learn_action`; `min_level`, `once_per_run` |
+| Perk | `data/level_up_perks.json` | `tierN` pools; `effect` or `effects`; `repeatable: false` for one-time perks; `requires` to limit by class |
 
 To add a new *kind* of mechanic, register one handler:
 

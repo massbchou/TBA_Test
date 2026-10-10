@@ -1,60 +1,126 @@
 {
     "tier1": [
         {
-            "perk_id": "hale_and_hearty",
-            "name": "Hale and Hearty",
-            "description": "Max HP +20.",
+            "perk_id": "stout_heart",
+            "name": "Stout Heart",
+            "description": "+15 max HP.",
             "repeatable": true,
-            "effect": {"type": "stat_change", "stat": "max_health", "value": 20}
+            "effects": [{"type": "stat_change", "stat": "max_health", "value": 15}]
         },
         {
-            "perk_id": "physical_prowess",
-            "name": "Physical Prowess",
-            "description": "Strength +3.",
-            "repeatable": false,
-            "effect": {"type": "stat_change", "stat": "str", "value": 3}
-        },
-        {
-            "perk_id": "elemental_augmentation",
-            "name": "Elemental Augmentation",
-            "description": "Intelligence +3.",
-            "repeatable": false,
-            "effect": {"type": "stat_change", "stat": "int", "value": 3}
-        },
-        {
-            "perk_id": "saving_grace",
-            "name": "Saving Grace",
-            "description": "Wisdom +3.",
-            "repeatable": false,
-            "effect": {"type": "stat_change", "stat": "wis", "value": 3}
-        },
-        {
-            "perk_id": "fleetfoot",
-            "name": "Fleetfoot",
-            "description": "Speed +15.",
-            "repeatable": false,
-            "effect": {"type": "stat_change", "stat": "speed", "value": 15}
-        },
-        {
-            "perk_id": "evasive_maneuvers",
-            "name": "Evasive Maneuvers",
-            "description": "Defense +2.",
+            "perk_id": "iron_skin",
+            "name": "Iron Skin",
+            "description": "+2 Defense.",
             "repeatable": true,
-            "effect": {"type": "stat_change", "stat": "defense", "value": 2}
+            "effects": [{"type": "stat_change", "stat": "defense", "value": 2}]
         },
         {
-            "perk_id": "stamina_training",
-            "name": "Stamina Training",
-            "description": "Constitution +2 (more Stamina).",
+            "perk_id": "deep_breath",
+            "name": "Deep Breath",
+            "description": "+3 CON (more Stamina).",
             "repeatable": true,
-            "effect": {"type": "stat_change", "stat": "con", "value": 2}
+            "effects": [{"type": "stat_change", "stat": "con", "value": 3}],
+            "requires": {"class": ["Warrior", "Martial Artist"]}
         },
         {
-            "perk_id": "keen_eye",
-            "name": "Keen Eye",
-            "description": "Dexterity +2.",
-            "repeatable": true,
-            "effect": {"type": "stat_change", "stat": "dex", "value": 2}
+            "perk_id": "brawn",
+            "name": "Brawn",
+            "description": "+3 STR.",
+            "repeatable": false,
+            "effects": [{"type": "stat_change", "stat": "str", "value": 3}],
+            "requires": {"class": ["Warrior", "Priest"]}
+        },
+        {
+            "perk_id": "nimble",
+            "name": "Nimble",
+            "description": "+3 DEX.",
+            "repeatable": false,
+            "effects": [{"type": "stat_change", "stat": "dex", "value": 3}],
+            "requires": {"class": ["Martial Artist"]}
+        },
+        {
+            "perk_id": "keen_mind",
+            "name": "Keen Mind",
+            "description": "+3 INT.",
+            "repeatable": false,
+            "effects": [{"type": "stat_change", "stat": "int", "value": 3}],
+            "requires": {"class": ["Mage"]}
+        },
+        {
+            "perk_id": "devotion",
+            "name": "Devotion",
+            "description": "+3 WIS.",
+            "repeatable": false,
+            "effects": [{"type": "stat_change", "stat": "wis", "value": 3}],
+            "requires": {"class": ["Priest"]}
+        },
+        {
+            "perk_id": "quick_feet",
+            "name": "Quick Feet",
+            "description": "+12 Speed.",
+            "repeatable": false,
+            "effects": [{"type": "stat_change", "stat": "speed", "value": 12}]
+        },
+        {
+            "perk_id": "field_medic",
+            "name": "Field Medic",
+            "description": "Learn Mend (heal and cure poison).",
+            "repeatable": false,
+            "effects": [{"type": "learn_action", "action_id": "mend"}],
+            "requires": {"class": ["Warrior", "Martial Artist", "Mage"]}
+        },
+        {
+            "perk_id": "snare_training",
+            "name": "Snare Training",
+            "description": "Learn Snare (-40 Speed to a foe).",
+            "repeatable": false,
+            "effects": [{"type": "learn_action", "action_id": "snare"}]
+        },
+        {
+            "perk_id": "collectors_strike",
+            "name": "Light Fingers",
+            "description": "Learn Collector's Strike (hit and steal gold).",
+            "repeatable": false,
+            "effects": [{"type": "learn_action", "action_id": "collect"}],
+            "requires": {"class": ["Warrior", "Martial Artist"]}
+        },
+        {
+            "perk_id": "blood_pact",
+            "name": "Blood Pact",
+            "description": "+5 STR and +5 DEX, but -20 max HP.",
+            "repeatable": false,
+            "effects": [
+                {"type": "stat_change", "stat": "str", "value": 5},
+                {"type": "stat_change", "stat": "dex", "value": 5},
+                {"type": "stat_change", "stat": "max_health", "value": -20}
+            ],
+            "requires": {"class": ["Warrior", "Martial Artist"]}
+        },
+        {
+            "perk_id": "forbidden_text",
+            "name": "Forbidden Text",
+            "description": "+5 INT and +5 WIS, but -20 max HP.",
+            "repeatable": false,
+            "effects": [
+                {"type": "stat_change", "stat": "int", "value": 5},
+                {"type": "stat_change", "stat": "wis", "value": 5},
+                {"type": "stat_change", "stat": "max_health", "value": -20}
+            ],
+            "requires": {"class": ["Priest", "Mage"]}
+        },
+        {
+            "perk_id": "silver_tongue",
+            "name": "Silver Tongue",
+            "description": "+6 CHA: merchants give you better prices.",
+            "repeatable": false,
+            "effects": [{"type": "stat_change", "stat": "cha", "value": 6}]
+        },
+        {
+            "perk_id": "lantern_ward",
+            "name": "Lantern Ward",
+            "description": "+25 Dark resistance.",
+            "repeatable": false,
+            "effects": [{"type": "stat_change", "stat": "dark_resistance", "value": 25}]
         }
     ]
 }

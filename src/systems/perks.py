@@ -48,9 +48,12 @@ class PerkManager:
         return list(self.perks[available[-1][1]]) if available else []
 
     def draw(self, player: "Player", level: int) -> list[dict[str, Any]]:
+        from src.systems.events import unmet_requirement
+
         pool = [
             p for p in self.pool_for_level(level)
-            if p.get("repeatable", True) or p["perk_id"] not in player.perks
+            if (p.get("repeatable", True) or p["perk_id"] not in player.perks)
+            and unmet_requirement(player, p.get("requires")) is None
         ]
         count = min(int(self.settings.get("player", {}).get("level_up_perk_choices", 3)), len(pool))
         return self.rng.sample(pool, count)
@@ -64,6 +67,8 @@ class PerkManager:
         labels = [f"{p['name']} - {p.get('description', '')}" for p in options]
         chosen = options[self.input.choose(f"Level {level}! Choose a perk:", labels)]
         player.perks.append(chosen["perk_id"])
-        for msg in apply_effects(player, [chosen["effect"]], self.loader):
+        from src.data_loader import perk_effects
+
+        for msg in apply_effects(player, perk_effects(chosen), self.loader):
             self.narrator(msg)
         return chosen

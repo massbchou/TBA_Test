@@ -14,6 +14,10 @@ class InputProvider(Protocol):
         """Returns the 0-based index of the chosen option."""
         ...
 
+    def ask_text(self, prompt: str, default: str) -> str:
+        """Returns free text, or ``default`` when nothing is entered."""
+        ...
+
 
 class ConsoleInput:
     """Prompts on the console until a valid option number is entered."""
@@ -33,6 +37,13 @@ class ConsoleInput:
             if raw.isdigit() and 1 <= int(raw) <= len(options):
                 return int(raw) - 1
             print(f"Please enter a number between 1 and {len(options)}.")
+
+    def ask_text(self, prompt: str, default: str) -> str:
+        try:
+            raw = input(f"\n{prompt} [{default}]: ").strip()
+        except EOFError:
+            return default
+        return raw or default
 
 
 class ScriptedInput:
@@ -61,9 +72,18 @@ class ScriptedInput:
                 return i
         raise RuntimeError(f"Scripted answer {answer!r} matches none of {list(options)}")
 
+    def ask_text(self, prompt: str, default: str) -> str:
+        self.prompts.append(prompt)
+        if self.answers and isinstance(self.answers[0], str) and self.answers[0].startswith("text:"):
+            return self.answers.pop(0)[5:] or default
+        return default
+
 
 class AutoInput:
-    """Always picks the first option."""
+    """Always picks the first option and accepts every default."""
 
     def choose(self, prompt: str, options: Sequence[str]) -> int:
         return 0
+
+    def ask_text(self, prompt: str, default: str) -> str:
+        return default

@@ -1,106 +1,135 @@
 {
-    "heal_wounds": {
+    "mend": {
         "id": 201,
-        "name": "Heal Wounds",
-        "description": "Restore health to every ally.",
-        "tags": ["cleric", "healing"],
+        "name": "Mend",
+        "description": "Heal 16+WIS HP and cure poison. Usable at camp.",
+        "tags": ["priest", "healing"],
         "costs": {"mana": 8},
-        "action_string": "HEAL ALL_ALLIES 15+WIS"
+        "action_string": "HEAL SELF 16+WIS\nCLEANSE SELF POISON",
+        "usable_outside_combat": true
     },
-    "holy_light": {
+    "renewal": {
         "id": 202,
-        "name": "Holy Light",
-        "description": "Smite a foe with radiant light.",
-        "tags": ["cleric", "light", "offensive"],
-        "costs": {"mana": 10},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.4*WIS+5 LIGHT"
+        "name": "Renewal",
+        "description": "A slow blessing: regenerate HP each turn for 4 turns.",
+        "tags": ["priest", "healing"],
+        "costs": {"mana": 8},
+        "action_string": "APPLY SELF REGEN 4_TURNS"
     },
-    "sheltering_veil": {
+    "smite": {
         "id": 203,
-        "name": "Sheltering Veil",
-        "description": "Ward yourself against the elements for 3 turns.",
-        "tags": ["cleric", "buff"],
-        "costs": {"mana": 12},
-        "action_string": "BUFF SELF fire_resistance 30 3_TURNS\nBUFF SELF ice_resistance 30 3_TURNS\nBUFF SELF lightning_resistance 30 3_TURNS\nBUFF SELF wind_resistance 30 3_TURNS\nBUFF SELF light_resistance 30 3_TURNS\nBUFF SELF dark_resistance 30 3_TURNS"
+        "name": "Smite",
+        "description": "Call down light on one foe. Dusk creatures fear it.",
+        "tags": ["priest", "offensive", "light"],
+        "costs": {"mana": 7},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.3*WIS LIGHT"
     },
-    "fireball": {
+    "firebolt": {
         "id": 211,
-        "name": "Fireball",
-        "description": "Hurl a ball of fire at one foe.",
-        "tags": ["scholar", "fire", "offensive"],
-        "costs": {"mana": 10},
+        "name": "Firebolt",
+        "description": "A bolt of fire at one foe.",
+        "tags": ["mage", "offensive", "fire"],
+        "costs": {"mana": 8},
         "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*INT FIRE"
     },
-    "icicle": {
+    "frost_lance": {
         "id": 212,
-        "name": "Icicle",
-        "description": "Impale one foe on a spike of ice.",
-        "tags": ["scholar", "ice", "offensive"],
-        "costs": {"mana": 10},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*INT ICE"
+        "name": "Frost Lance",
+        "description": "Ice damage that also slows the target (-20 Speed, 2 turns).",
+        "tags": ["mage", "offensive", "ice"],
+        "costs": {"mana": 9},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.3*INT ICE\nDEBUFF PREVIOUS_TARGETS SPEED 20 2_TURNS"
     },
-    "lightning_bolt": {
+    "spark_storm": {
         "id": 213,
-        "name": "Lightning Bolt",
-        "description": "Call lightning down on one foe.",
-        "tags": ["scholar", "lightning", "offensive"],
-        "costs": {"mana": 10},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.5*INT LIGHTNING"
-    },
-    "tradewinds": {
-        "id": 221,
-        "name": "Tradewinds",
-        "description": "Batter a foe with a gale.",
-        "tags": ["merchant", "wind", "offensive"],
-        "costs": {"mana": 8},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.3*INT+4 WIND"
-    },
-    "night_ode": {
-        "id": 231,
-        "name": "Night Ode",
-        "description": "A mournful song that wounds one foe.",
-        "tags": ["dancer", "dark", "offensive"],
-        "costs": {"mana": 8},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.3*CHA DARK"
-    },
-    "moonlight_waltz": {
-        "id": 232,
-        "name": "Moonlight Waltz",
-        "description": "A dance of shadow over every foe.",
-        "tags": ["dancer", "dark", "offensive", "aoe"],
+        "name": "Spark Storm",
+        "description": "Lightning arcs between every foe.",
+        "tags": ["mage", "offensive", "lightning", "aoe"],
         "costs": {"mana": 14},
-        "action_string": "DAMAGE ALL_ENEMIES 0.9*CHA DARK"
+        "action_string": "DAMAGE ALL_ENEMIES 1.0*INT LIGHTNING"
     },
-    "e_fire_breath": {
-        "id": 951,
-        "name": "Fire Breath",
-        "description": "",
-        "tags": ["enemy", "fire"],
+    "siphon": {
+        "id": 214,
+        "name": "Siphon",
+        "description": "A thread of dark that wounds a foe and draws mana back to you.",
+        "tags": ["mage", "offensive", "dark"],
         "costs": {},
-        "action_string": "DAMAGE ALL_ENEMIES 1.0*INT+6 FIRE"
+        "action_string": "DAMAGE 1_ENEMY CHOICE 0.7*INT DARK\nRESTORE SELF MANA 4+PREVIOUS_DAMAGE_DEALT/3"
     },
-    "e_shaman_mend": {
-        "id": 952,
-        "name": "Mend",
+    "e_spore_cloud": {
+        "id": 951,
+        "name": "Spore Cloud",
         "description": "",
-        "tags": ["enemy", "healing"],
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "APPLY ALL_ENEMIES POISON 3_TURNS",
+        "message": "{caster} bursts, releasing a choking yellow cloud."
+    },
+    "e_fire_spit": {
+        "id": 952,
+        "name": "Fire Spit",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.0*INT FIRE\nAPPLY PREVIOUS_TARGETS BURN 2_TURNS"
+    },
+    "e_curse": {
+        "id": 953,
+        "name": "Bog Curse",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DEBUFF 1_ENEMY STR 4 3_TURNS\nDEBUFF PREVIOUS_TARGETS DEFENSE 3 3_TURNS",
+        "message": "{caster} mutters, and your limbs feel heavy."
+    },
+    "e_life_siphon": {
+        "id": 954,
+        "name": "Life Siphon",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.1*INT DARK\nHEAL SELF PREVIOUS_DAMAGE_DEALT"
+    },
+    "e_bandit_mend": {
+        "id": 955,
+        "name": "Swig of Grog",
+        "description": "",
+        "tags": ["enemy"],
         "costs": {},
         "action_string": "HEAL 1_ALLY CHOICE 20-30"
     },
-    "e_inferno": {
-        "id": 953,
-        "name": "Gathering Inferno",
+    "e_lantern_eater": {
+        "id": 956,
+        "name": "Lantern-Eater",
         "description": "",
-        "tags": ["enemy", "fire", "charge"],
+        "tags": ["enemy"],
         "costs": {},
-        "action_string": "SET SELF charging true 1_TURN\nDELAY NONBLOCKING TURNS 1 IF SELF EXISTS_VARIABLE charging DAMAGE ALL_ENEMIES 2.0*INT FIRE"
+        "action_string": "SET SELF charging true 1_TURN\nDELAY NONBLOCKING TURNS 1 IF SELF EXISTS_VARIABLE charging DAMAGE ALL_ENEMIES 2.2*INT DARK",
+        "message": "The Warden drinks the light from the air. It will release it as a wave of darkness on its next turn - heal up or finish it now."
     },
-    "e_poison_mist": {
-        "id": 954,
-        "name": "Poison Mist",
+    "e_dust_storm": {
+        "id": 957,
+        "name": "Dust Storm",
         "description": "",
-        "tags": ["enemy", "poison"],
+        "tags": ["enemy"],
         "costs": {},
-        "action_string": "APPLY ALL_ENEMIES POISON 3_TURNS"
+        "action_string": "DAMAGE ALL_ENEMIES 0.8*INT DARK\nDEBUFF ALL_ENEMIES SPEED 20 2_TURNS"
+    },
+    "e_moth_kiss": {
+        "id": 958,
+        "name": "Moth Kiss",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.0*INT DARK\nHEAL SELF PREVIOUS_DAMAGE_DEALT/2"
+    },
+    "e_blinding_bloom": {
+        "id": 959,
+        "name": "Blinding Bloom",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "APPLY ALL_ENEMIES POISON 3_TURNS\nDEBUFF ALL_ENEMIES STR 4 3_TURNS",
+        "message": "A thousand wings open at once. The air turns to glittering poison."
     }
 }

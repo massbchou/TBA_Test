@@ -34,6 +34,17 @@ class TestCommands(unittest.TestCase):
         self.assertEqual(self.e.get_stat("speed"), 70)
         self.assertEqual(self.p.modifiers[0].timer.remaining, 2)
 
+    def test_reapplying_same_action_refreshes_unless_it_stacks(self):
+        from tests.helpers import action
+        slow = action("DEBUFF 1_ENEMY SPEED 25 2_TURNS", action_id="grasp")
+        rally = action("BUFF SELF STR 4 3_TURNS", action_id="rally", tags=["stacks"])
+        for _ in range(3):
+            self.battle.orchestrator.execute(self.p, slow, self.battle)
+            self.battle.orchestrator.execute(self.p, rally, self.battle)
+        self.assertEqual(self.e.get_stat("speed"), 75)
+        self.assertEqual(self.p.get_stat("str"), 22)
+        self.assertIn("  Goblin's Speed penalty is renewed.", self.battle.messages)
+
     def test_set_literals(self):
         run(self.battle, self.p, "SET SELF a true\nSET SELF b 3\nSET SELF c hello 2_TURNS")
         self.assertIs(self.p.variables["a"].value, True)

@@ -26,6 +26,22 @@ _ALIASES = {
 }
 
 
+_DISPLAY = {
+    "max_health": "Max HP", "health": "HP", "defense": "Defense", "speed": "Speed", "luck": "Luck",
+    "stamina": "Stamina", "mana": "Mana", "max_stamina": "Max Stamina", "max_mana": "Max Mana",
+}
+
+
+def display_name(name: str) -> str:
+    """Player-facing stat name: STR/DEX/... for primaries, words for the rest."""
+    key = canonical_stat(name)
+    if key in PRIMARY_STATS:
+        return key.upper()
+    if key.endswith("_resistance"):
+        return f"{key[:-11].title()} resistance"
+    return _DISPLAY.get(key, key.replace("_", " ").title())
+
+
 def canonical_stat(name: str) -> str:
     """Maps a DSL or data stat name to its canonical lowercase key."""
     return _ALIASES.get(name.upper(), name.lower())

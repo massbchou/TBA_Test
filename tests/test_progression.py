@@ -97,7 +97,7 @@ class TestOccurrences(unittest.TestCase):
         player = self.loader.build_player("Rogue")
         player.health = 10
         player.resources["mana"].current = 0
-        self.run_event(RestEvent(), player, [])
+        self.run_event(RestEvent(), player, ["Rest"])
         self.assertEqual(player.health, 55)
         self.assertEqual(player.resources["mana"].current, 20)
 

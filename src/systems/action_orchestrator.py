@@ -43,8 +43,12 @@ class ActionOrchestrator:
     def execute(self, caster: "Character", action: "ActionDef", battle: "Battle", log: bool = True) -> ActionResult:
         """Executes an action and records it in the combat log.
 
-        Costs and cooldowns are the caller's responsibility (see Combat).
+        Costs and cooldowns are the caller's responsibility (see Combat). An action's
+        optional ``message`` (e.g. a boss telegraph) is narrated first; ``{caster}``
+        is replaced with the caster's name.
         """
+        if action.message:
+            battle.narrate(f"  {action.message.replace('{caster}', caster.name)}")
         if action.predefined is not None:
             name = action.predefined.get("name")
             fn = PREDEFINED.get(name)

@@ -1,14 +1,26 @@
 {
     "POISON": {
-        "description": "Loses 8% of max HP at the start of each of its turns.",
+        "description": "Loses 1 + 8% of max HP at the start of each of its turns.",
         "stacking": "refresh",
-        "tags": ["debuff", "dot"],
+        "tags": ["debuff"],
         "hooks": {"on_turn_start": "DAMAGE SELF 1+0.08*MAX_HP POISON"}
     },
+    "BURN": {
+        "description": "Takes 5 Fire damage at the start of each turn. Stacks.",
+        "stacking": "stack",
+        "tags": ["debuff"],
+        "hooks": {"on_turn_start": "DAMAGE SELF 5 FIRE"}
+    },
     "REGEN": {
-        "description": "Recovers 8 HP at the start of each of its turns.",
+        "description": "Recovers 6 + WIS/3 HP at the start of each of its turns.",
         "stacking": "refresh",
         "tags": ["buff"],
-        "hooks": {"on_turn_start": "HEAL SELF 8"}
-    }
+        "hooks": {"on_turn_start": "HEAL SELF 6+WIS/3"}
+    },
+    "MARKED": {
+        "description": "Pressure point exposed. Finishing Strike hits twice.",
+        "stacking": "refresh",
+        "tags": ["debuff"]
+    },
+    "SUNDERED": {"description": "Guard broken. Heavy Blow hits twice.", "stacking": "refresh", "tags": ["debuff"]}
 }

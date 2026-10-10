@@ -6,7 +6,8 @@ delay scheduler, the combat log and status hook dispatch.
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any, Callable, Sequence
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence
 
 from src.io.input_provider import AutoInput, InputProvider
 from src.rng import get_rng
@@ -50,6 +51,7 @@ class Battle:
         self.round_time_units = int(combat_cfg.get("round_time_units", DEFAULT_ROUND_TIME_UNITS))
         self.reference_speed = int(combat_cfg.get("reference_speed", DEFAULT_REFERENCE_SPEED))
         self.round_length = self.round_time_units / self.reference_speed
+        self.physical_types = {t.upper() for t in combat_cfg.get("physical_types", ["PHYSICAL"])}
         self.narrator = narrator or (lambda text: None)
         self.allow_run = allow_run
         self.clock = 0.0
@@ -57,6 +59,7 @@ class Battle:
         self.log = CombatLog()
         self.scheduler = Scheduler()
         self._hook_depth = 0
+        self._narration_tag: str | None = None
 
     # ------------------------------------------------------------- sides
 
@@ -80,7 +83,21 @@ class Battle:
         return self.fled or not self.player.is_alive() or not any(e.is_alive() for e in self.enemies)
 
     def narrate(self, text: str) -> None:
+        if self._narration_tag and text.startswith("  "):
+            text = f"  [{self._narration_tag}] {text[2:]}"
         self.narrator(text)
+
+    @contextmanager
+    def narration_tag(self, tag: str) -> Iterator[None]:
+        """Prefixes narration with ``[tag]`` for effects that happen outside their source's turn."""
+        previous, self._narration_tag = self._narration_tag, tag
+        try:
+            yield
+        finally:
+            self._narration_tag = previous
+
+    def is_physical(self, damage_type: str) -> bool:
+        return damage_type.upper() in self.physical_types
 
     def on_defeat(self, char: "Character") -> None:
         self.narrate(f"  {char.name} is defeated!")
@@ -93,9 +110,7 @@ class Battle:
         self.clock = max(self.clock, clock)
         for char in self.participants:
             if char.is_alive():
-                for status in char.expire_clock(self.clock):
-                    self.narrate(f"  {char.name}'s {status.name} wears off.")
-                    self.run_status_hook(char, status, "on_expire")
+                self._announce_expired(char, char.expire_clock(self.clock))
         for pending in self.scheduler.due_at_clock(self.clock):
             pending.fire()
 
@@ -109,10 +124,26 @@ class Battle:
     def end_turn(self, char: "Character") -> None:
         if not char.is_alive():
             return
-        for status in char.tick_turn_timers():
-            self.narrate(f"  {char.name}'s {status.name} wears off.")
-            self.run_status_hook(char, status, "on_expire")
+        self._announce_expired(char, char.tick_turn_timers())
         self.emit("on_turn_end", char)
+
+    def _announce_expired(self, char: "Character", expired: list) -> None:
+        from src.models.character import ActiveStatus
+
+        faded: list[str] = []
+        for item in expired:
+            if isinstance(item, ActiveStatus):
+                self.narrate(f"  {char.name}'s {item.name} wears off.")
+                self.run_status_hook(char, item, "on_expire")
+            else:
+                from src.stats import display_name
+
+                label = f"{display_name(item.stat)} {'boost' if item.amount >= 0 else 'penalty'}"
+                if label not in faded:
+                    faded.append(label)
+        if faded:
+            listed = faded[0] if len(faded) == 1 else ", ".join(faded[:-1]) + " and " + faded[-1]
+            self.narrate(f"  {char.name}'s {listed} {'wears' if len(faded) == 1 else 'wear'} off.")
 
     # ------------------------------------------------------------- hooks
 
@@ -129,9 +160,10 @@ class Battle:
             return
         self._hook_depth += 1
         try:
-            for _ in range(max(1, status.stacks)):
-                if not bearer.is_alive():
-                    break
-                self.orchestrator.execute_string(bearer, script, self, source=f"status:{status.name}")
+            with self.narration_tag(status.name.replace("_", " ").title()):
+                for _ in range(max(1, status.stacks)):
+                    if not bearer.is_alive():
+                        break
+                    self.orchestrator.execute_string(bearer, script, self, source=f"status:{status.name}")
         finally:
             self._hook_depth -= 1

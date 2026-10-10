@@ -21,6 +21,14 @@ from src.systems.actions.parser import parse_program
 from src.systems.ai.script_parser import parse_scripts, referenced_abilities
 from src.systems.effects import EFFECTS, REQUIRED_PARAMS
 
+REQUIREMENT_KEYS = {"gold", "class", "item", "stat", "level"}
+CHOICE_KEYS = {"result_text", "description", "requires", "effects", "choices", "chance", "success", "failure"}
+
+def perk_effects(perk: dict[str, Any]) -> list[dict[str, Any]]:
+    """A perk holds either one ``effect`` or a list of ``effects``."""
+    return list(perk.get("effects", [])) or ([perk["effect"]] if "effect" in perk else [])
+
+
 STATUS_HOOKS = ("on_apply", "on_turn_start", "on_turn_end", "on_damage_taken", "on_expire")
 
 
@@ -46,6 +54,13 @@ class DataLoader:
     def starting_options(self) -> dict[str, dict[str, Any]]:
         """Backwards compatibility alias for starting_classes."""
         return self.starting_classes
+
+    def perk_name(self, perk_id: str) -> str:
+        for perks in self.level_up_perks.values():
+            for perk in perks:
+                if perk.get("perk_id") == perk_id:
+                    return perk.get("name", perk_id)
+        return perk_id
 
     def _read_json(self, path: Path) -> Any:
         if not path.exists():
@@ -82,6 +97,7 @@ class DataLoader:
             enemy_id=slug,
             category=data.get("category", "Normal"),
             level=int(data.get("level", 1)),
+            intro=data.get("intro", ""),
             abilities=list(data.get("abilities", [])),
             loot_table=list(data.get("loot_table", [])),
             attack_scripts=list(data.get("attack_scripts", [])),
@@ -100,8 +116,12 @@ class DataLoader:
             abilities=list(data.get("abilities", [])),
             spells=list(data.get("spells", [])),
             inventory=dict(data.get("starting_items", {})),
+            class_name=class_name,
+            gold=int(data.get("gold", 0)),
+            growth=dict(data.get("growth", {})),
             basic_attack=data.get("basic_attack", "1.0*STR"),
-            derived_formulas=dict(self.settings.get("player", {}).get("derived_stats", {})),
+            basic_attack_type=data.get("basic_attack_type", "PHYSICAL"),
+            derived_formulas={**self.settings.get("player", {}).get("derived_stats", {}), **data.get("derived_stats", {})},
         )
         if "player" in self.settings:
             formula = self.settings["player"].get("exp_formula", "100")
@@ -115,8 +135,10 @@ class DataLoader:
         categories: list[str] | None = None,
         min_level: int | None = None,
         max_level: int | None = None,
+        any_tags: list[str] | None = None,
     ) -> list[str]:
-        """Returns enemy slugs matching all tag, category, and level constraints."""
+        """Returns enemy slugs matching the category and level constraints, all of
+        ``required_tags``, and at least one of ``any_tags``."""
         matched: list[str] = []
         for slug, data in self.enemies.items():
             if categories and data.get("category") not in categories:
@@ -128,10 +150,11 @@ class DataLoader:
             if max_level is not None and lvl > max_level:
                 continue
 
-            if required_tags:
-                enemy_tags = data.get("tags", [])
-                if not all(tag in enemy_tags for tag in required_tags):
-                    continue
+            enemy_tags = data.get("tags", [])
+            if required_tags and not all(tag in enemy_tags for tag in required_tags):
+                continue
+            if any_tags and not any(tag in enemy_tags for tag in any_tags):
+                continue
 
             matched.append(slug)
         return matched
@@ -150,6 +173,12 @@ class DataLoader:
                     diags.append(Diagnostic(
                         "info", f"APPLY of undefined status {line.args[0]!r} (treated as a marker)",
                         line.number, f"{action.source}:{action.id}"))
+
+        # Items: prices for shop stock
+        for item_id in self.items:
+            action = self.actions[item_id]
+            if action.has_tag("shop") and action.price <= 0:
+                diags.append(Diagnostic("error", "tagged 'shop' but has no price", source=f"item:{item_id}"))
 
         # Statuses
         for name, sdef in self.status_defs.items():
@@ -202,18 +231,31 @@ class DataLoader:
             error = validate_formula(data.get("basic_attack", "1.0*STR"), is_known_stat)
             if error:
                 diags.append(Diagnostic("error", f"basic_attack: {error}", source=where))
+            for stat in data.get("growth", {}):
+                if not is_known_stat(stat):
+                    diags.append(Diagnostic("error", f"growth stat {stat!r} is not a stat", source=where))
 
-        for stat, formula in self.settings.get("player", {}).get("derived_stats", {}).items():
+        formulas = [("settings", k, f) for k, f in self.settings.get("player", {}).get("derived_stats", {}).items()]
+        formulas += [(f"class:{c}", k, f) for c, d in self.starting_classes.items() for k, f in d.get("derived_stats", {}).items()]
+        for where, stat, formula in formulas:
             error = validate_formula(formula, is_known_stat)
             if error:
-                diags.append(Diagnostic("error", f"derived_stats.{stat}: {error}", source="settings"))
+                diags.append(Diagnostic("error", f"derived_stats.{stat}: {error}", source=where))
 
         # Perks and occurrences
         for tier, perks in self.level_up_perks.items():
             for perk in perks:
-                diags += self._validate_effects([perk.get("effect", {})], f"perk:{tier}:{perk.get('perk_id')}")
+                where = f"perk:{tier}:{perk.get('perk_id')}"
+                diags += self._validate_effects(perk_effects(perk), where)
+                diags += self._validate_requires(perk.get("requires", {}), where)
         for key, occ in self.events.get("occurrences", {}).items():
             diags += self._validate_choices(occ.get("choices", {}), f"occurrence:{key}")
+
+        # Encounter bands must match at least one enemy
+        for band in self.settings.get("combat", {}).get("rules_by_level_range", []):
+            tags = band.get("regular_combat", {}).get("enemy_tags")
+            if tags and not self.filter_enemies(categories=["Normal"], any_tags=tags):
+                diags.append(Diagnostic("error", f"no Normal enemies tagged any of {tags}", source="settings"))
 
         # Event enemy references
         for section in ("preconstructed_ordeals", "boss_events"):
@@ -235,13 +277,53 @@ class DataLoader:
                 diags.append(Diagnostic("error", f"{etype} effect missing {missing}", source=where))
             if etype == "item" and effect.get("item_id") not in self.items:
                 diags.append(Diagnostic("error", f"unknown item {effect.get('item_id')!r}", source=where))
+            if etype == "learn_action":
+                action = self.actions.get(effect.get("action_id"))
+                if action is None or action.source not in (SOURCE_TECHNIQUE, SOURCE_SPELL):
+                    diags.append(Diagnostic("error", f"learn_action {effect.get('action_id')!r} is not a technique or spell", source=where))
+            if etype == "combat":
+                for slug in effect.get("enemies", []):
+                    if slug not in self.enemies:
+                        diags.append(Diagnostic("error", f"combat effect references unknown enemy {slug!r}", source=where))
+        return diags
+
+    def _validate_requires(self, requires: dict[str, Any], where: str) -> list[Diagnostic]:
+        diags = []
+        for key in set(requires) - REQUIREMENT_KEYS:
+            diags.append(Diagnostic("error", f"unknown requirement {key!r}", source=where))
+        classes = requires.get("class")
+        for cls in ([classes] if isinstance(classes, str) else classes or []):
+            if cls not in self.starting_classes:
+                diags.append(Diagnostic("error", f"requires unknown class {cls!r}", source=where))
+        item = requires.get("item")
+        for item_id in (item if isinstance(item, dict) else [item] if item else []):
+            if item_id not in self.items:
+                diags.append(Diagnostic("error", f"requires unknown item {item_id!r}", source=where))
+        for stat in requires.get("stat", {}):
+            if not is_known_stat(stat):
+                diags.append(Diagnostic("error", f"requires unknown stat {stat!r}", source=where))
+        return diags
+
+    def _validate_outcome(self, data: dict[str, Any], where: str) -> list[Diagnostic]:
+        diags = []
+        for key in set(data) - CHOICE_KEYS:
+            diags.append(Diagnostic("error", f"unknown choice key {key!r}", source=where))
+        diags += self._validate_requires(data.get("requires", {}), where)
+        if "chance" in data:
+            if not 0 <= float(data["chance"]) <= 1:
+                diags.append(Diagnostic("error", "chance must be between 0 and 1", source=where))
+            for branch in ("success", "failure"):
+                diags += self._validate_outcome(data.get(branch, {}), f"{where} ({branch})")
+        elif "choices" in data:
+            diags += self._validate_choices(data["choices"], where)
+        else:
+            diags += self._validate_effects(data.get("effects", []), where)
         return diags
 
     def _validate_choices(self, choices: dict[str, Any], where: str) -> list[Diagnostic]:
         diags = []
         for label, choice in choices.items():
-            if "choices" in choice:
-                diags += self._validate_choices(choice["choices"], f"{where} > {label}")
-            else:
-                diags += self._validate_effects(choice.get("effects", []), f"{where} > {label}")
+            diags += self._validate_outcome(choice, f"{where} > {label}")
+        if choices and all(c.get("requires") for c in choices.values()):
+            diags.append(Diagnostic("warning", "every choice has requirements; add an always-available option", source=where))
         return diags

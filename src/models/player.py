@@ -15,7 +15,10 @@ class Player(Character):
     abilities: list[str] = field(default_factory=list)
     spells: list[str] = field(default_factory=list)
     perks: list[str] = field(default_factory=list)
+    class_name: str = ""
     basic_attack: str = "1.0*STR"
+    basic_attack_type: str = "PHYSICAL"
+    growth: dict[str, int] = field(default_factory=dict)
     derived_formulas: dict[str, str] = field(default_factory=dict)
     exp_to_next_level: int = 0
 
@@ -55,6 +58,17 @@ class Player(Character):
 
     def owns(self, action_id: str) -> bool:
         return action_id in self.abilities or action_id in self.spells
+
+    def apply_growth(self) -> list[str]:
+        """Applies one level's worth of class stat growth. Returns readable changes."""
+        changes = []
+        for stat, amount in self.growth.items():
+            if amount:
+                self.modify_base_stat(stat, amount)
+                from src.stats import display_name
+
+                changes.append(f"{display_name(stat)} {amount:+d}")
+        return changes
 
     def refill_resources(self) -> None:
         for res in self.resources.values():

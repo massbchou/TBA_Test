@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from src.systems.perks import PerkManager
 
 MAX_TURNS = 500
-PLAYER_MENU = ["Attack", "Defend", "Technique", "Cast", "Bag", "Run"]
 
 
 class CombatResult(Enum):
@@ -54,13 +53,18 @@ class Combat:
         rng: random.Random | None = None,
         narrator: Callable[[str], None] = print,
         perk_manager: PerkManager | None = None,
+        run_stats: dict[str, Any] | None = None,
     ):
         self.player = player
         self.settings = settings
         self.data_loader = data_loader
         combat_cfg = self.settings.get("combat", {})
         self.round_time_units = int(combat_cfg.get("round_time_units", 12500))
-        self.stamina_regen = int(combat_cfg.get("stamina_regen_per_turn", 0))
+        self.resource_regen: dict[str, int] = dict(combat_cfg.get("resource_regen", {}))
+        if not self.resource_regen and combat_cfg.get("stamina_regen_per_turn"):
+            self.resource_regen = {"stamina": int(combat_cfg["stamina_regen_per_turn"])}
+        self.post_victory_restore = float(combat_cfg.get("post_victory_restore", 0))
+        self.min_speed_fraction = float(combat_cfg.get("min_speed_fraction", 0.5))
         self.actions: ActionRegistry = data_loader.actions if data_loader else ActionRegistry.build()
         self.action_orchestrator = action_orchestrator or ActionOrchestrator(data_loader)
         self.ai_controller = ai_controller or AIController(data_loader, actions=self.actions)
@@ -68,6 +72,7 @@ class Combat:
         self.rng = rng or get_rng()
         self.narrate = narrator
         self.perk_manager = perk_manager
+        self.run_stats = run_stats if run_stats is not None else {}
         self.enemies: list[Enemy] = []
         self.battle: Battle | None = None
 
@@ -90,6 +95,13 @@ class Combat:
         )
         self.battle = battle
 
+        self._label_duplicates(self.enemies)
+        intros = []
+        for enemy in self.enemies:
+            if enemy.intro and enemy.intro not in intros:
+                intros.append(enemy.intro)
+        for intro in intros:
+            self.narrate(f"  {intro}")
         self.narrate("\n================== COMBAT STARTS ==================")
         self.narrate(f"Hero: {self.player.name} (HP: {self.player.health}/{self.player.get_stat('max_health')}, Speed: {self.player.get_stat('speed')})")
         for enemy in self.enemies:
@@ -114,12 +126,12 @@ class Combat:
                     self._process_player_turn(battle)
                 else:
                     self._process_enemy_turn(actor, battle)  # type: ignore[arg-type]
-            if actor.is_alive() and self.stamina_regen:
-                actor.restore_resource("stamina", self.stamina_regen)
+            if actor.is_alive():
+                for resource, amount in self.resource_regen.items():
+                    actor.restore_resource(resource, amount)
             battle.end_turn(actor)
 
-            speed = max(1, int(actor.get_stat("speed") or 1))
-            actor.action_time += max(1, self.round_time_units // speed)
+            actor.action_time += max(1, self.round_time_units // self._turn_speed(actor))
 
             turns += 1
             if turns >= MAX_TURNS:
@@ -133,11 +145,16 @@ class Combat:
 
         if result is CombatResult.VICTORY:
             self.narrate("\n>>> VICTORY! All enemies have been defeated! <<<")
+            self.run_stats["enemies_defeated"] = self.run_stats.get("enemies_defeated", 0) + len(self.enemies)
+            if self.post_victory_restore:
+                for res in self.player.resources.values():
+                    res.current = min(res.maximum, res.current + int(res.maximum * self.post_victory_restore))
             self._process_post_combat_rewards()
         elif result is CombatResult.FLED:
             self.narrate("\n>>> You escaped the battle. <<<")
         else:
             self.narrate("\n>>> DEFEAT! You have fallen in battle... <<<")
+            self.run_stats["cause_of_death"] = ", ".join(e.name for e in self.enemies)
         return result
 
     def _result(self, battle: Battle) -> CombatResult:
@@ -146,6 +163,25 @@ class Combat:
         if battle.fled:
             return CombatResult.FLED
         return CombatResult.VICTORY
+
+    @staticmethod
+    def _label_duplicates(enemies: list[Enemy]) -> None:
+        """Give identical enemies distinct names (Hollow A, Hollow B) so targets are unambiguous."""
+        counts: dict[str, int] = {}
+        for enemy in enemies:
+            counts[enemy.name] = counts.get(enemy.name, 0) + 1
+        seen: dict[str, int] = {}
+        for enemy in enemies:
+            if counts[enemy.name] > 1:
+                index = seen.get(enemy.name, 0)
+                seen[enemy.name] = index + 1
+                enemy.name = f"{enemy.name} {chr(ord('A') + index)}"
+
+    def _turn_speed(self, actor: Character) -> int:
+        """Speed used for turn cost. Debuffs can't push it below ``min_speed_fraction`` of base speed,
+        so stacked slows can never lock a character out of the fight."""
+        floor = actor.base_stat("speed") * self.min_speed_fraction
+        return max(1, int(max(actor.get_stat("speed"), floor)))
 
     @staticmethod
     def _next_actor(battle: Battle) -> Character:
@@ -163,10 +199,21 @@ class Combat:
 
     # ------------------------------------------------------------- player
 
+    def used_resources(self, player: Player) -> set[str]:
+        """Resources that some action the player knows actually costs."""
+        used: set[str] = set()
+        for action_id in player.abilities + player.spells:
+            action = self.actions.get(action_id)
+            if action is not None:
+                used |= set(action.costs)
+        return used
+
     def _status_line(self, char: Character) -> str:
         parts = [f"HP {char.health}/{int(char.get_stat('max_health'))}"]
+        shown = self.used_resources(char) if char is self.player else set()
         for name, res in char.resources.items():
-            parts.append(f"{name.upper()} {res.current}/{res.maximum}")
+            if name in shown:
+                parts.append(f"{name.upper()} {res.current}/{res.maximum}")
         if char.statuses:
             parts.append("[" + ", ".join(s.name for s in char.statuses) + "]")
         return f"{char.name}: " + " | ".join(parts)
@@ -178,9 +225,18 @@ class Combat:
         for enemy in battle.enemies_of(player):
             self.narrate("  vs " + self._status_line(enemy))
 
+        menu = ["Attack", "Defend"]
+        # The category with more known actions comes first, so learning one off-class skill
+        # appends a menu entry instead of shifting the numbers the player is used to.
+        categories = [("Technique", player.abilities), ("Cast", player.spells)]
+        categories.sort(key=lambda c: -len(c[1]))
+        menu += [name for name, known in categories if known]
+        menu.append("Bag" if self._usable_items() else "Bag (empty)")  # always shown, so numbering stays stable
+        menu.append("Run")
+
         action: ActionDef | None = None
         while action is None:
-            choice = PLAYER_MENU[self.input.choose("Your move:", PLAYER_MENU)]
+            choice = menu[self.input.choose("Your move:", menu)]
             if choice == "Attack":
                 action = self.actions["attack"]
             elif choice == "Defend":
@@ -189,7 +245,7 @@ class Combat:
                 action = self._pick_action("Technique", player.abilities, SOURCE_TECHNIQUE)
             elif choice == "Cast":
                 action = self._pick_action("Spell", player.spells, SOURCE_SPELL)
-            elif choice == "Bag":
+            elif choice.startswith("Bag"):
                 action = self._pick_item()
             elif choice == "Run":
                 if battle.allow_run:
@@ -213,7 +269,7 @@ class Combat:
         for a in options:
             cost = ", ".join(f"{v} {k}" for k, v in a.costs.items()) or "free"
             short = "" if self.player.can_afford(a.costs) else "  (not enough resources)"
-            labels.append(f"{a.name} ({cost}){short}")
+            labels.append(f"{a.name} ({cost}){short} - {a.description}")
         idx = self.input.choose(f"Choose a {label.lower()}:", labels + ["Back"])
         if idx == len(options):
             return None
@@ -223,12 +279,15 @@ class Combat:
             return None
         return chosen
 
-    def _pick_item(self) -> ActionDef | None:
-        stacks = [
+    def _usable_items(self) -> list[tuple[ActionDef, int]]:
+        return [
             (self.actions[item_id], qty)
             for item_id, qty in self.player.inventory.items()
             if item_id in self.actions and self.actions[item_id].usable_in_combat and qty > 0
         ]
+
+    def _pick_item(self) -> ActionDef | None:
+        stacks = self._usable_items()
         if not stacks:
             self.narrate("Your bag has nothing usable in combat.")
             return None
@@ -256,6 +315,10 @@ class Combat:
         total_gold = 0
         items: dict[str, int] = {}
 
+        recovered = sum(getattr(e, "stolen_gold", 0) for e in self.enemies)
+        if recovered:
+            total_gold += recovered
+            self.narrate(f"You take back the {recovered} gold that was stolen from you.")
         for enemy in self.enemies:
             total_exp += int(enemy.get_stat("exp_reward") or (enemy.level * 20))
             for loot in enemy.loot_table:
@@ -268,7 +331,9 @@ class Combat:
                     items[loot["item_id"]] = items.get(loot["item_id"], 0) + amount
 
         self.player.gold += total_gold
-        self.narrate(f"Loot acquired: {total_gold} Gold! (Total Gold: {self.player.gold})")
+        self.run_stats["gold_earned"] = self.run_stats.get("gold_earned", 0) + total_gold
+        if total_gold:
+            self.narrate(f"You find {total_gold} gold. (Gold: {self.player.gold})")
         for item_id, qty in items.items():
             self.player.add_item(item_id, qty)
             name = self.actions[item_id].name if item_id in self.actions else item_id
@@ -281,5 +346,8 @@ class Combat:
         self.narrate(f"Gained {total_exp} EXP! (Current EXP: {self.player.exp}/{self.player.exp_to_next_level})")
         for lvl in leveled:
             self.narrate(f"*** LEVEL UP! You reached Level {lvl}! ***")
+            growth = self.player.apply_growth()
+            if growth:
+                self.narrate("    " + ", ".join(growth))
             if self.perk_manager is not None:
                 self.perk_manager.offer(self.player, lvl)
