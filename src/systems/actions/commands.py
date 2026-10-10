@@ -28,7 +28,7 @@ def damage(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
     total = 0
     for target in targets:
         raw = ctx.eval_amount(args[0])
-        dealt = target.apply_damage(raw, dtype)
+        dealt = target.apply_damage(raw, dtype, physical=battle.is_physical(dtype))
         lr.amounts[target.name] = lr.amounts.get(target.name, 0) + dealt
         total += dealt
         battle.narrate(f"  {target.name} takes {dealt} {dtype} damage. (HP {_hp(target)})")
@@ -121,3 +121,26 @@ def cleanse(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
         lr.amounts[target.name] = len(names)
         if names:
             ctx.battle.narrate(f"  {target.name} is cleansed of {', '.join(names)}.")
+
+
+def _gold_holders(targets):
+    return [t for t in targets if hasattr(t, "gold")]
+
+
+@register_command("GAIN_GOLD", ["amount"])
+def gain_gold(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
+    for target in _gold_holders(targets):
+        amount = max(0, ctx.eval_amount(args[0]))
+        target.gold += amount
+        lr.amounts[target.name] = amount
+        ctx.battle.narrate(f"  {target.name} pockets {amount} gold.")
+
+
+@register_command("LOSE_GOLD", ["amount"])
+def lose_gold(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
+    for target in _gold_holders(targets):
+        amount = min(target.gold, max(0, ctx.eval_amount(args[0])))
+        target.gold -= amount
+        lr.amounts[target.name] = amount
+        if amount:
+            ctx.battle.narrate(f"  {target.name} loses {amount} gold!")

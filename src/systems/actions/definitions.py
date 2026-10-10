@@ -26,6 +26,9 @@ class ActionDef:
     predefined: dict[str, Any] | None = None
     ai_target: str | None = None
     usable_in_combat: bool = True
+    usable_outside_combat: bool = False
+    price: int = 0
+    message: str | None = None
     program: Program | None = None
 
     def has_tag(self, tag: str) -> bool:
@@ -46,6 +49,9 @@ class ActionDef:
             predefined=data.get("predefined_action"),
             ai_target=data.get("ai_target"),
             usable_in_combat=bool(data.get("usable_in_combat", True)),
+            usable_outside_combat=bool(data.get("usable_outside_combat", False)),
+            price=int(data.get("price", 0)),
+            message=data.get("message"),
         )
         if defn.action_string is not None:
             defn.program = parse_program(defn.action_string, source=f"{source}:{action_id}")

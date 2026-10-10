@@ -18,6 +18,7 @@ from src.stats import HEALTH, HP_PERCENTAGE, RESOURCES, canonical_stat, is_known
 
 PHYSICAL = "PHYSICAL"
 MIN_DAMAGE = 1
+MIN_DAMAGE_FRACTION = 0.2  # a hit always deals at least 20% of its post-resistance amount
 RESISTANCE_CAP = (-100, 90)
 
 
@@ -162,21 +163,23 @@ class Character:
         """Check if character is alive."""
         return self.health > 0
 
-    def apply_damage(self, amount: float, damage_type: str = PHYSICAL) -> int:
+    def apply_damage(self, amount: float, damage_type: str = PHYSICAL, physical: bool | None = None) -> int:
         """Runs the damage pipeline and returns the damage actually dealt.
 
-        Order: resistance for the damage type, then defense (PHYSICAL only), then
-        a minimum of 1 for any positive hit.
+        Order: resistance for the damage type, then defense (physical types only;
+        by default just PHYSICAL), then a floor of max(1, 20% of the resisted amount).
         """
         if amount <= 0 or not self.is_alive():
             return 0
         dtype = damage_type.upper()
+        if physical is None:
+            physical = dtype == PHYSICAL
         resistance = self.get_stat(f"{dtype.lower()}_resistance")
         resistance = max(RESISTANCE_CAP[0], min(RESISTANCE_CAP[1], resistance))
-        value = amount * (1 - resistance / 100)
-        if dtype == PHYSICAL:
-            value -= self.get_stat("defense")
-        dealt = max(MIN_DAMAGE, math.floor(value + 1e-9))  # epsilon guards float error, e.g. 100 * (1 - 0.9)
+        resisted = amount * (1 - resistance / 100)
+        value = resisted - self.get_stat("defense") if physical else resisted
+        floor = max(MIN_DAMAGE, math.ceil(resisted * MIN_DAMAGE_FRACTION - 1e-9))
+        dealt = max(floor, math.floor(value + 1e-9))  # epsilon guards float error, e.g. 100 * (1 - 0.9)
         dealt = min(dealt, self.health)
         self.health -= dealt
         return dealt
@@ -289,10 +292,11 @@ class Character:
 
     # -------------------------------------------------------------- timers
 
-    def tick_turn_timers(self) -> list[ActiveStatus]:
-        """End-of-own-turn tick for every TURNS timer. Returns statuses that expired."""
+    def tick_turn_timers(self) -> list[ActiveStatus | Modifier]:
+        """End-of-own-turn tick for every TURNS timer. Returns statuses and modifiers that expired."""
         turn = self.turn_count
-        self.modifiers = [m for m in self.modifiers if not (m.timer and m.timer.tick_turn(turn))]
+        expired_mods = [m for m in self.modifiers if m.timer and m.timer.tick_turn(turn)]
+        self.modifiers = [m for m in self.modifiers if m not in expired_mods]
         self.variables = {
             k: v for k, v in self.variables.items() if not (v.timer and v.timer.tick_turn(turn))
         }
@@ -301,17 +305,18 @@ class Character:
         for action_id, remaining in list(self.cooldowns.items()):
             if remaining > 0 and self._cooldown_set_turn.get(action_id) != turn:
                 self.cooldowns[action_id] = remaining - 1
-        return expired
+        return expired + expired_mods
 
-    def expire_clock(self, clock: float) -> list[ActiveStatus]:
-        """Removes CLOCK timers that have run out. Returns statuses that expired."""
-        self.modifiers = [m for m in self.modifiers if not (m.timer and m.timer.expired_at_clock(clock))]
+    def expire_clock(self, clock: float) -> list[ActiveStatus | Modifier]:
+        """Removes CLOCK timers that have run out. Returns statuses and modifiers that expired."""
+        expired_mods = [m for m in self.modifiers if m.timer and m.timer.expired_at_clock(clock)]
+        self.modifiers = [m for m in self.modifiers if m not in expired_mods]
         self.variables = {
             k: v for k, v in self.variables.items() if not (v.timer and v.timer.expired_at_clock(clock))
         }
         expired = [s for s in self.statuses if s.timer and s.timer.expired_at_clock(clock)]
         self.statuses = [s for s in self.statuses if s not in expired]
-        return expired
+        return expired + expired_mods
 
     def clear_combat_state(self) -> None:
         """Drops everything combat-scoped. Variables set without a duration persist."""

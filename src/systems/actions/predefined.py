@@ -54,7 +54,8 @@ def register_predefined(name: str) -> Callable[[Predefined], Predefined]:
 @register_predefined("attack")
 def attack(orchestrator, caster, action_def, battle, params) -> ActionResult:
     formula = params.get("formula") or getattr(caster, "basic_attack", None) or "1.0*STR"
-    return orchestrator.execute_string(caster, f"DAMAGE 1_ENEMY CHOICE {formula} PHYSICAL", battle, action=action_def)
+    damage_type = params.get("damage_type") or getattr(caster, "basic_attack_type", None) or "PHYSICAL"
+    return orchestrator.execute_string(caster, f"DAMAGE 1_ENEMY CHOICE {formula} {damage_type}", battle, action=action_def)
 
 
 @register_predefined("defend")

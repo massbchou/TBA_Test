@@ -48,9 +48,12 @@ class PerkManager:
         return list(self.perks[available[-1][1]]) if available else []
 
     def draw(self, player: "Player", level: int) -> list[dict[str, Any]]:
+        from src.systems.events import unmet_requirement
+
         pool = [
             p for p in self.pool_for_level(level)
-            if p.get("repeatable", True) or p["perk_id"] not in player.perks
+            if (p.get("repeatable", True) or p["perk_id"] not in player.perks)
+            and unmet_requirement(player, p.get("requires")) is None
         ]
         count = min(int(self.settings.get("player", {}).get("level_up_perk_choices", 3)), len(pool))
         return self.rng.sample(pool, count)

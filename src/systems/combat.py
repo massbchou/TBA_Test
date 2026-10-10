@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from src.systems.perks import PerkManager
 
 MAX_TURNS = 500
-PLAYER_MENU = ["Attack", "Defend", "Technique", "Cast", "Bag", "Run"]
 
 
 class CombatResult(Enum):
@@ -54,13 +53,17 @@ class Combat:
         rng: random.Random | None = None,
         narrator: Callable[[str], None] = print,
         perk_manager: PerkManager | None = None,
+        run_stats: dict[str, Any] | None = None,
     ):
         self.player = player
         self.settings = settings
         self.data_loader = data_loader
         combat_cfg = self.settings.get("combat", {})
         self.round_time_units = int(combat_cfg.get("round_time_units", 12500))
-        self.stamina_regen = int(combat_cfg.get("stamina_regen_per_turn", 0))
+        self.resource_regen: dict[str, int] = dict(combat_cfg.get("resource_regen", {}))
+        if not self.resource_regen and combat_cfg.get("stamina_regen_per_turn"):
+            self.resource_regen = {"stamina": int(combat_cfg["stamina_regen_per_turn"])}
+        self.post_victory_restore = float(combat_cfg.get("post_victory_restore", 0))
         self.actions: ActionRegistry = data_loader.actions if data_loader else ActionRegistry.build()
         self.action_orchestrator = action_orchestrator or ActionOrchestrator(data_loader)
         self.ai_controller = ai_controller or AIController(data_loader, actions=self.actions)
@@ -68,6 +71,7 @@ class Combat:
         self.rng = rng or get_rng()
         self.narrate = narrator
         self.perk_manager = perk_manager
+        self.run_stats = run_stats if run_stats is not None else {}
         self.enemies: list[Enemy] = []
         self.battle: Battle | None = None
 
@@ -114,8 +118,9 @@ class Combat:
                     self._process_player_turn(battle)
                 else:
                     self._process_enemy_turn(actor, battle)  # type: ignore[arg-type]
-            if actor.is_alive() and self.stamina_regen:
-                actor.restore_resource("stamina", self.stamina_regen)
+            if actor.is_alive():
+                for resource, amount in self.resource_regen.items():
+                    actor.restore_resource(resource, amount)
             battle.end_turn(actor)
 
             speed = max(1, int(actor.get_stat("speed") or 1))
@@ -133,11 +138,16 @@ class Combat:
 
         if result is CombatResult.VICTORY:
             self.narrate("\n>>> VICTORY! All enemies have been defeated! <<<")
+            self.run_stats["enemies_defeated"] = self.run_stats.get("enemies_defeated", 0) + len(self.enemies)
+            if self.post_victory_restore:
+                for res in self.player.resources.values():
+                    res.current = min(res.maximum, res.current + int(res.maximum * self.post_victory_restore))
             self._process_post_combat_rewards()
         elif result is CombatResult.FLED:
             self.narrate("\n>>> You escaped the battle. <<<")
         else:
             self.narrate("\n>>> DEFEAT! You have fallen in battle... <<<")
+            self.run_stats["cause_of_death"] = ", ".join(e.name for e in self.enemies)
         return result
 
     def _result(self, battle: Battle) -> CombatResult:
@@ -163,10 +173,21 @@ class Combat:
 
     # ------------------------------------------------------------- player
 
+    def used_resources(self, player: Player) -> set[str]:
+        """Resources that some action the player knows actually costs."""
+        used: set[str] = set()
+        for action_id in player.abilities + player.spells:
+            action = self.actions.get(action_id)
+            if action is not None:
+                used |= set(action.costs)
+        return used
+
     def _status_line(self, char: Character) -> str:
         parts = [f"HP {char.health}/{int(char.get_stat('max_health'))}"]
+        shown = self.used_resources(char) if char is self.player else set()
         for name, res in char.resources.items():
-            parts.append(f"{name.upper()} {res.current}/{res.maximum}")
+            if name in shown:
+                parts.append(f"{name.upper()} {res.current}/{res.maximum}")
         if char.statuses:
             parts.append("[" + ", ".join(s.name for s in char.statuses) + "]")
         return f"{char.name}: " + " | ".join(parts)
@@ -178,9 +199,18 @@ class Combat:
         for enemy in battle.enemies_of(player):
             self.narrate("  vs " + self._status_line(enemy))
 
+        menu = ["Attack", "Defend"]
+        if player.abilities:
+            menu.append("Technique")
+        if player.spells:
+            menu.append("Cast")
+        if self._usable_items():
+            menu.append("Bag")
+        menu.append("Run")
+
         action: ActionDef | None = None
         while action is None:
-            choice = PLAYER_MENU[self.input.choose("Your move:", PLAYER_MENU)]
+            choice = menu[self.input.choose("Your move:", menu)]
             if choice == "Attack":
                 action = self.actions["attack"]
             elif choice == "Defend":
@@ -223,12 +253,15 @@ class Combat:
             return None
         return chosen
 
-    def _pick_item(self) -> ActionDef | None:
-        stacks = [
+    def _usable_items(self) -> list[tuple[ActionDef, int]]:
+        return [
             (self.actions[item_id], qty)
             for item_id, qty in self.player.inventory.items()
             if item_id in self.actions and self.actions[item_id].usable_in_combat and qty > 0
         ]
+
+    def _pick_item(self) -> ActionDef | None:
+        stacks = self._usable_items()
         if not stacks:
             self.narrate("Your bag has nothing usable in combat.")
             return None
@@ -268,7 +301,9 @@ class Combat:
                     items[loot["item_id"]] = items.get(loot["item_id"], 0) + amount
 
         self.player.gold += total_gold
-        self.narrate(f"Loot acquired: {total_gold} Gold! (Total Gold: {self.player.gold})")
+        self.run_stats["gold_earned"] = self.run_stats.get("gold_earned", 0) + total_gold
+        if total_gold:
+            self.narrate(f"You find {total_gold} gold. (Gold: {self.player.gold})")
         for item_id, qty in items.items():
             self.player.add_item(item_id, qty)
             name = self.actions[item_id].name if item_id in self.actions else item_id
@@ -281,5 +316,8 @@ class Combat:
         self.narrate(f"Gained {total_exp} EXP! (Current EXP: {self.player.exp}/{self.player.exp_to_next_level})")
         for lvl in leveled:
             self.narrate(f"*** LEVEL UP! You reached Level {lvl}! ***")
+            growth = self.player.apply_growth()
+            if growth:
+                self.narrate("    " + ", ".join(growth))
             if self.perk_manager is not None:
                 self.perk_manager.offer(self.player, lvl)

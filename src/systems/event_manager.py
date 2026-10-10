@@ -23,51 +23,71 @@ class EventManager:
         self.rng = rng or get_rng()
 
     def generate_choices(self, game_state: GameState) -> list[Event]:
-        """Generates choices for the current floor."""
+        """Generates the path choices for the current floor.
+
+        Rules: the boss floor offers only the boss; the floor before it always
+        offers a rest stop (``pre_boss_rest``); event types below their
+        ``min_level`` fall back to a regular battle; no event id appears twice on
+        one floor; occurrences offered in the last few floors and spent
+        ``once_per_run`` events are not offered again.
+        """
         level = game_state.current_level
         events_cfg = self.settings.get("events", {})
         boss_interval = events_cfg.get("boss_level_interval", 10)
 
-        # 1. Milestone Boss Floor
         if boss_interval > 0 and level % boss_interval == 0:
-            boss_event = self._generate_boss_event(level)
-            return [boss_event]
+            return [self._generate_boss_event(level)]
 
+        excluded = game_state.recently_offered() | set(game_state.used_once)
+        offered: set[str] = set()
         choices: list[Event] = []
+        distributions = events_cfg.get("distributions", {})
 
-        # 2. Regular choices
-        num_regular = events_cfg.get("next_event_choices", 2)
-        reg_dist = events_cfg.get("distributions", {}).get("regular", {})
-        for _ in range(num_regular):
-            event_type = weighted_choice(reg_dist, rng=self.rng) or "regular_combat"
-            event = self._build_event(event_type, level, is_mystery=False)
-            if event:
-                choices.append(event)
+        slots = [(False, distributions.get("regular", {}))] * events_cfg.get("next_event_choices", 2)
+        slots += [(True, distributions.get("mystery", {}))] * events_cfg.get("mystery_choices", 1)
+        pre_boss = boss_interval > 0 and events_cfg.get("pre_boss_rest", False) and (level + 1) % boss_interval == 0
 
-        # 3. Mystery choices
-        num_mystery = events_cfg.get("mystery_choices", 1)
-        mys_dist = events_cfg.get("distributions", {}).get("mystery", {})
-        for _ in range(num_mystery):
-            event_type = weighted_choice(mys_dist, rng=self.rng) or "regular_combat"
-            event = self._build_event(event_type, level, is_mystery=True)
-            if event:
-                choices.append(event)
+        for index, (is_mystery, dist) in enumerate(slots):
+            if pre_boss and index == 0:
+                event = self._build_event("rest_stop", level, False, excluded, offered)
+            else:
+                event = None
+                for _ in range(6):
+                    event_type = weighted_choice(dist, rng=self.rng) or "regular_combat"
+                    event = self._build_event(event_type, level, is_mystery, excluded, offered)
+                    if event is not None:
+                        break
+                if event is None:
+                    event = self._generate_regular_combat(level, is_mystery)
+            offered.add(event.id)
+            choices.append(event)
 
+        game_state.remember_offers([e.id for e in choices if isinstance(e, OccurrenceEvent)])
         return choices
 
-    def _build_event(self, event_type: str, level: int, is_mystery: bool) -> Event:
+    def _build_event(
+        self, event_type: str, level: int, is_mystery: bool, excluded: set[str], offered: set[str]
+    ) -> Event | None:
+        """Builds an event of the given type, or None if no eligible event exists."""
+        min_level = self.settings.get("events", {}).get("min_level", {}).get(event_type, 1)
+        if level < min_level:
+            event_type = "regular_combat"
         if event_type == "regular_combat":
             return self._generate_regular_combat(level, is_mystery)
-        elif event_type == "ordeal_combat":
-            return self._generate_ordeal_combat(level, is_mystery)
-        elif event_type == "normal_occurrence":
-            return self._generate_occurrence(level, is_reward=False, is_mystery=is_mystery)
-        elif event_type == "reward_occurrence":
-            return self._generate_occurrence(level, is_reward=True, is_mystery=is_mystery)
-        elif event_type == "rest_stop":
-            return RestEvent(is_mystery=is_mystery)
-        else:
-            return self._generate_regular_combat(level, is_mystery)
+        if event_type == "ordeal_combat":
+            event = self._generate_ordeal_combat(level, is_mystery)
+            return None if event.id in offered else event
+        if event_type in ("normal_occurrence", "reward_occurrence"):
+            return self._generate_occurrence(level, event_type == "reward_occurrence", is_mystery, excluded | offered)
+        if event_type == "rest_stop":
+            return None if "rest_site" in offered else RestEvent(is_mystery=is_mystery, stock=self._shop_stock())
+        return self._generate_regular_combat(level, is_mystery)
+
+    def _shop_stock(self) -> list[str]:
+        cfg = self.settings.get("events", {}).get("shop", {})
+        pool = [a.id for a in self.data_loader.actions.all() if a.has_tag("shop") and a.price > 0]
+        size = min(int(cfg.get("stock_size", 4)), len(pool))
+        return sorted(self.rng.sample(pool, size), key=lambda i: self.data_loader.actions[i].price)
 
     def _get_combat_rules_for_level(self, level: int) -> dict[str, Any] | None:
         rules_list = self.settings.get("combat", {}).get("rules_by_level_range", [])
@@ -96,8 +116,8 @@ class EventManager:
 
         return CombatEvent(
             event_id="regular_combat",
-            display_name=f"Battle: {names}",
-            description=f"Hostile creatures block your path: {names}!",
+            display_name=names,
+            description="Something moves on the road ahead.",
             encounter=encounter,
             subtype="Regular",
             is_mystery=is_mystery,
@@ -120,7 +140,7 @@ class EventManager:
             encounter = [self.data_loader.build_enemy(slug) for slug in ordeal_data.get("enemies", [])]
             return CombatEvent(
                 event_id=ordeal_key,
-                display_name=f"Ordeal: {ordeal_data.get('display_name', 'Ambush')}",
+                display_name=ordeal_data.get("display_name", "Ambush"),
                 description=ordeal_data.get("description", "A deadly ambush!"),
                 encounter=encounter,
                 subtype="Ordeal",
@@ -152,45 +172,35 @@ class EventManager:
         names = ", ".join(e.name for e in encounter)
         return CombatEvent(
             event_id="ordeal_random",
-            display_name=f"Ordeal: {names}",
-            description=f"A perilous ordeal lies ahead: {names}!",
+            display_name=names,
+            description="The road narrows. Whatever waits here is stronger than the usual stragglers.",
             encounter=encounter,
             subtype="Ordeal",
             is_mystery=is_mystery,
         )
 
-    def _generate_occurrence(self, level: int, is_reward: bool, is_mystery: bool) -> OccurrenceEvent:
+    def _generate_occurrence(
+        self, level: int, is_reward: bool, is_mystery: bool, excluded: set[str] | None = None
+    ) -> OccurrenceEvent | None:
+        excluded = excluded or set()
         occurrences = self.data_loader.events.get("occurrences", {})
-        matched: list[tuple[str, dict[str, Any]]] = []
-
-        for key, occ in occurrences.items():
-            tags = occ.get("tags", [])
-            if is_reward and "reward" in tags:
-                matched.append((key, occ))
-            elif not is_reward and "reward" not in tags:
-                matched.append((key, occ))
-
-        if not matched and occurrences:
-            matched = list(occurrences.items())
-
-        if matched:
-            key, occ_data = self.rng.choice(matched)
-            return OccurrenceEvent(
-                event_id=key,
-                display_name=occ_data.get("display_name", "Curious Scene"),
-                description=occ_data.get("description", "You discover an interesting place."),
-                choices=occ_data.get("choices", {}),
-                subtype="Reward" if is_reward else "Normal",
-                is_mystery=is_mystery,
-            )
-
+        matched = [
+            (key, occ) for key, occ in occurrences.items()
+            if ("reward" in occ.get("tags", [])) == is_reward
+            and key not in excluded
+            and occ.get("min_level", 1) <= level
+        ]
+        if not matched:
+            return None
+        key, occ_data = self.rng.choice(matched)
         return OccurrenceEvent(
-            event_id="generic_occurrence",
-            display_name="Mysterious Pathway",
-            description="The stone walls echo with ancient whispers.",
-            choices={},
-            subtype="Normal",
+            event_id=key,
+            display_name=occ_data.get("display_name", "Curious Scene"),
+            description=occ_data.get("description", "You discover an interesting place."),
+            choices=occ_data.get("choices", {}),
+            subtype="Reward" if is_reward else "Normal",
             is_mystery=is_mystery,
+            once_per_run=bool(occ_data.get("once_per_run", False)),
         )
 
     def _generate_boss_event(self, level: int) -> CombatEvent:
@@ -200,7 +210,7 @@ class EventManager:
             encounter = [self.data_loader.build_enemy(slug) for slug in bdata.get("enemies", [])]
             return CombatEvent(
                 event_id=key,
-                display_name=f"BOSS: {bdata.get('display_name', 'Dungeon Master')}",
+                display_name=bdata.get("display_name", "The Warden"),
                 description=bdata.get("description", "A monumental presence looms before you!"),
                 encounter=encounter,
                 subtype="Boss",
@@ -215,8 +225,8 @@ class EventManager:
         boss = self.data_loader.build_enemy(slug)
         return CombatEvent(
             event_id=f"boss_{slug}",
-            display_name=f"BOSS: {boss.name}",
-            description=f"A monstrous boss stands guard: {boss.name}!",
+            display_name=boss.name,
+            description=f"{boss.name} bars the way forward.",
             encounter=[boss],
             subtype="Boss",
             is_mystery=False,

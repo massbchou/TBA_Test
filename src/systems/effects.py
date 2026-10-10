@@ -59,10 +59,14 @@ def _restore(player, effect, loader) -> str:
 
 @register_effect("gold", ("amount",))
 def _gold(player, effect, loader) -> str:
+    """Adds or removes gold. Spending is gated by a choice's ``requires``; this never goes below 0."""
     before = player.gold
     player.gold = max(0, player.gold + int(effect["amount"]))
     delta = player.gold - before
-    return f"You {'gain' if delta >= 0 else 'lose'} {abs(delta)} gold. (Gold: {player.gold})"
+    if delta == 0:
+        return ""
+    verb = "receive" if delta > 0 else "pay"
+    return f"You {verb} {abs(delta)} gold. (Gold: {player.gold})"
 
 
 @register_effect("item", ("item_id",))
@@ -73,6 +77,25 @@ def _item(player, effect, loader) -> str:
     if loader is not None and effect["item_id"] in getattr(loader, "items", {}):
         name = loader.items[effect["item_id"]].get("name", name)
     return f"You obtain {name} x{qty}."
+
+
+@register_effect("learn_action", ("action_id",))
+def _learn_action(player, effect, loader) -> str:
+    action_id = effect["action_id"]
+    action = loader.actions.get(action_id) if loader is not None else None
+    if action is None:
+        return f"(Unknown action {action_id!r}.)"
+    known = player.spells if action.source == "spell" else player.abilities
+    if action_id in known:
+        return f"You already know {action.name}."
+    known.append(action_id)
+    return f"You learn {action.name}!"
+
+
+@register_effect("combat", ("enemies",))
+def _combat(player, effect, loader) -> str:
+    # Combat needs the running Combat system, so OccurrenceEvent handles this type itself.
+    return ""
 
 
 def apply_effects(player: "Player", effects: list[dict[str, Any]], loader: Any = None) -> list[str]:

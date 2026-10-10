@@ -52,11 +52,20 @@ class TestPlayerActions(unittest.TestCase):
         self.assertIn("You can't afford Heavy Slam right now.", log)
         self.assertEqual(sum(1 for line in log if line.startswith("> ")), 1)
 
-    def test_cast_with_no_spells(self):
+    def test_menu_hides_empty_categories(self):
         warrior = self.loader.build_player("Warrior")
-        combat, log = make_combat(warrior, ["Cast", "Attack"], self.loader)
+        warrior.inventory = {}
+        menus = []
+
+        class Recording(ScriptedInput):
+            def choose(self, prompt, options):
+                menus.append(list(options))
+                return super().choose(prompt, options)
+
+        combat = Combat(warrior, SETTINGS, data_loader=self.loader, input_provider=Recording(["Attack"]),
+                        rng=random.Random(0), narrator=lambda s: None)
         combat.run([make_enemy(max_health=1, speed=1)])
-        self.assertIn("You don't know any spells.", log)
+        self.assertEqual(menus[0], ["Attack", "Defend", "Technique", "Run"])
 
     def test_defend_reduces_physical_damage_until_next_turn_ends(self):
         player = make_player(speed=200, con=10)
@@ -73,11 +82,10 @@ class TestPlayerActions(unittest.TestCase):
         warrior = self.loader.build_player("Warrior")
         warrior.health = 50
         warrior.inventory = {"health_potion": 1}
-        combat, log = make_combat(warrior, ["Bag", "Health Potion", "Bag", "Attack"], self.loader)
+        combat, log = make_combat(warrior, ["Bag", "Health Potion", "Attack"], self.loader)
         combat.run([make_enemy(max_health=1, speed=1)])
         self.assertIn(f"  {warrior.name} recovers 35 HP. (HP 85/120)", log)
         self.assertEqual(warrior.inventory, {})
-        self.assertIn("Your bag has nothing usable in combat.", log)
 
     def test_run_success_flees_without_rewards(self):
         player = make_player(speed=300)
