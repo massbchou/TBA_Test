@@ -1,165 +1,415 @@
 {
     "occurrences": {
-        "cobbleston_tavern": {
+        "brackenford_ferry": {
             "id": 3001,
-            "display_name": "A Tavern in Cobbleston",
-            "description": "An old drinker swears he knows what lurks on the road ahead.",
-            "tags": ["tier1", "occurrence"],
+            "display_name": "The Brackenford Ferry",
+            "description": "A ferryman leans on his pole. 'Crossing's ten. River's high, mind. Wouldn't swim it.'",
+            "tags": ["occurrence"],
             "choices": {
-                "Buy him a drink and inquire (-15 gold)": {
-                    "result_text": "He sketches a crude map and presses a pair of grapes into your hand.",
-                    "effects": [
-                        {"type": "gold", "amount": -15},
-                        {"type": "item", "item_id": "healing_grape", "quantity": 2}
-                    ]
+                "Pay the toll (10 gold)": {
+                    "result_text": "He hums the whole way across. You doze, and wake rested.",
+                    "effects": [{"type": "gold", "amount": -10}, {"type": "heal", "amount": 20}],
+                    "requires": {"gold": 10}
                 },
-                "Leave him to his cups": {"result_text": "You finish your water and move on.", "effects": []}
-            }
-        },
-        "rippletide_stall": {
-            "id": 3002,
-            "display_name": "A Market Stall in Rippletide",
-            "description": "A fishmonger has, inexplicably, a crate of soulstones.",
-            "tags": ["tier1", "occurrence"],
-            "choices": {
-                "Buy a Fire Soulstone (40 gold)": {
-                    "result_text": "The stone is warm to the touch.",
-                    "effects": [{"type": "gold", "amount": -40}, {"type": "item", "item_id": "fire_soulstone"}]
-                },
-                "Buy an Inspiriting Plum (25 gold)": {
-                    "result_text": "It smells of spring.",
-                    "effects": [{"type": "gold", "amount": -25}, {"type": "item", "item_id": "inspiriting_plum"}]
-                },
-                "Walk away": {"result_text": "You leave the fish to the gulls.", "effects": []}
-            }
-        },
-        "suspicious_noble": {
-            "id": 3003,
-            "display_name": "A Suspicious Noble",
-            "description": "A noble with a heavy purse glares at everyone who passes.",
-            "tags": ["tier1", "occurrence"],
-            "choices": {
-                "Pick his pocket (Steal)": {
-                    "result_text": "Your fingers find the purse. He never notices.",
-                    "effects": [{"type": "gold", "amount": 40}]
-                },
-                "Charm him (Allure)": {
-                    "result_text": "Flattered, he hands over a 'trinket' to be rid of you.",
-                    "effects": [{"type": "item", "item_id": "lightning_soulstone"}]
-                },
-                "Challenge him (Provoke)": {
-                    "result_text": "He declines with a sneer. Someone else will have to teach him manners.",
-                    "effects": []
-                }
-            }
-        },
-        "atlasdam_library": {
-            "id": 3004,
-            "display_name": "The Royal Library of Atlasdam",
-            "description": "Shelves of forbidden tomes stretch into the dark.",
-            "tags": ["tier1", "occurrence"],
-            "choices": {
-                "Study the Arcane Primer": {
-                    "result_text": "You emerge hours later, head throbbing but sharper.",
-                    "effects": [
-                        {"type": "stat_change", "stat": "int", "value": 2},
-                        {"type": "stat_change", "stat": "max_health", "value": -5}
-                    ]
-                },
-                "Read a Field Manual": {
-                    "result_text": "You learn a few tricks for staying alive.",
-                    "effects": [{"type": "stat_change", "stat": "con", "value": 1}]
-                }
-            }
-        },
-        "sacred_flame_shrine": {
-            "id": 3005,
-            "display_name": "A Shrine of the Sacred Flame",
-            "description": "A small flame burns here that has never gone out.",
-            "tags": ["tier1", "occurrence", "reward"],
-            "choices": {
-                "Kneel and pray": {
-                    "result_text": "",
-                    "description": "Warmth floods through you. The flame flickers expectantly.",
-                    "choices": {
-                        "Offer a tithe (-20 gold)": {
-                            "result_text": "The flame flares in approval.",
-                            "effects": [
-                                {"type": "gold", "amount": -20},
-                                {"type": "stat_change", "stat": "wis", "value": 2},
-                                {"type": "heal", "amount": 40}
-                            ]
-                        },
-                        "Simply give thanks": {"result_text": "You rise, rested.", "effects": [{"type": "heal", "amount": 25}]}
+                "Swim across": {
+                    "description": "You wade into the cold brown water.",
+                    "chance": 0.6,
+                    "success": {"result_text": "You haul yourself onto the far bank, soaked but fine.", "effects": []},
+                    "failure": {
+                        "result_text": "The current slams you against the pilings before you claw free.",
+                        "effects": [{"type": "hurt", "amount": 18}]
                     }
                 },
-                "Warm your hands and go": {"result_text": "You feel a little better.", "effects": [{"type": "heal", "amount": 10}]}
-            }
-        },
-        "abandoned_cart": {
-            "id": 3006,
-            "display_name": "An Abandoned Cart",
-            "description": "A merchant's cart lies overturned beside the road, its owner long gone.",
-            "tags": ["tier1", "occurrence", "reward"],
-            "choices": {
-                "Search the cart": {
-                    "result_text": "Among the debris you find coin and supplies.",
-                    "effects": [
-                        {"type": "gold", "amount": 30},
-                        {"type": "item", "item_id": "healing_grape", "quantity": 1},
-                        {"type": "item", "item_id": "energizing_pomegranate", "quantity": 1}
-                    ]
-                },
-                "Leave it be": {"result_text": "Some things are best left alone.", "effects": []}
-            }
-        },
-        "sunshade_stage": {
-            "id": 3007,
-            "display_name": "A Stage in Sunshade",
-            "description": "The tavern's dancer has fallen ill and the crowd is restless.",
-            "tags": ["tier1", "occurrence", "reward"],
-            "choices": {
-                "Take the stage": {
-                    "result_text": "The crowd roars. Coins rain down, and you leave with a new swagger.",
-                    "effects": [{"type": "gold", "amount": 25}, {"type": "stat_change", "stat": "cha", "value": 2}]
-                },
-                "Watch from the back": {
-                    "result_text": "You enjoy the show and a free meal.",
-                    "effects": [{"type": "heal", "amount": 20}]
+                "Shoulder through the shallows (Warrior)": {
+                    "result_text": "You plant your feet and walk it. The ferryman whistles. 'Never seen that before.'",
+                    "effects": [{"type": "gold", "amount": 5}],
+                    "requires": {"class": "Warrior"}
                 }
             }
+        },
+        "wayside_shrine": {
+            "id": 3002,
+            "display_name": "A Wayside Shrine",
+            "description": "A small Keeper shrine, its lamp still lit. Old prayers are carved into the stone.",
+            "tags": ["occurrence", "reward"],
+            "choices": {
+                "Kneel and pray": {
+                    "result_text": "The lamp brightens. You feel lighter.",
+                    "effects": [{"type": "heal", "amount": 25}]
+                },
+                "Leave an offering (20 gold)": {
+                    "result_text": "The flame flares gold. Something old approves.",
+                    "effects": [
+                        {"type": "gold", "amount": -20},
+                        {"type": "stat_change", "stat": "wis", "value": 2},
+                        {"type": "restore", "resource": "all"}
+                    ],
+                    "requires": {"gold": 20}
+                },
+                "Study the carvings (WIS 12)": {
+                    "result_text": "Among the prayers is a simple healing rite. You commit it to memory.",
+                    "effects": [{"type": "learn_action", "action_id": "mend"}],
+                    "requires": {"stat": {"wis": 12}}
+                }
+            }
+        },
+        "abandoned_caravan": {
+            "id": 3003,
+            "display_name": "An Abandoned Caravan",
+            "description": "Three wagons sit on the verge, doors open, horses gone. Their lanterns went out some time ago.",
+            "tags": ["occurrence", "reward"],
+            "choices": {
+                "Search the nearest wagon": {
+                    "result_text": "Coins and bread, left in a hurry.",
+                    "effects": [{"type": "gold", "amount": 20}, {"type": "item", "item_id": "waybread", "quantity": 1}]
+                },
+                "Search all three": {
+                    "description": "You climb into the dark of the last wagon...",
+                    "chance": 0.55,
+                    "success": {
+                        "result_text": "A Keeper's strongbox, unlocked.",
+                        "effects": [
+                            {"type": "gold", "amount": 45},
+                            {"type": "item", "item_id": "sun_lantern", "quantity": 1}
+                        ]
+                    },
+                    "failure": {
+                        "result_text": "Something was nesting in there.",
+                        "effects": [{"type": "combat", "enemies": ["dusk_rat", "dusk_rat"]}]
+                    }
+                },
+                "Leave it": {"result_text": "Whoever left in a hurry had reasons. You keep walking.", "effects": []}
+            }
+        },
+        "hollow_child": {
+            "id": 3004,
+            "display_name": "A Hollow-Eyed Child",
+            "description": "A small child sits by the road, hugging her knees. 'Are you going west? Do you have any bread?'",
+            "tags": ["occurrence"],
+            "choices": {
+                "Give her a Waybread": {
+                    "result_text": "She eats it in four bites and smiles. For a moment the dusk seems thinner.",
+                    "effects": [
+                        {"type": "item", "item_id": "waybread", "quantity": -1},
+                        {"type": "stat_change", "stat": "max_health", "value": 8}
+                    ],
+                    "requires": {"item": "waybread"}
+                },
+                "Follow her home": {
+                    "description": "She leads you off the road to a cottage with no lights...",
+                    "chance": 0.3,
+                    "success": {
+                        "result_text": "Her grandmother, very much alive, presses coins into your hand for your kindness.",
+                        "effects": [{"type": "gold", "amount": 30}]
+                    },
+                    "failure": {
+                        "result_text": "The cottage is full of Hollows. The child is one of them.",
+                        "effects": [{"type": "combat", "enemies": ["hollow", "hollow"]}]
+                    }
+                },
+                "Walk on": {"result_text": "You don't look back. It's easier that way.", "effects": []}
+            },
+            "min_level": 4
+        },
+        "greyhallow_scribe": {
+            "id": 3005,
+            "display_name": "A Scribe from Greyhallow",
+            "description": "A scholar with ink up to the elbows sits on a milestone, selling lessons. 'Knowledge is the only thing the Dusk can't take!'",
+            "tags": ["occurrence"],
+            "choices": {
+                "Buy a lesson in Firebolt (45 gold)": {
+                    "result_text": "Two hours later your fingertips smoke when you snap them.",
+                    "effects": [{"type": "gold", "amount": -45}, {"type": "learn_action", "action_id": "firebolt"}],
+                    "requires": {"gold": 45}
+                },
+                "Trade notes (Mage)": {
+                    "result_text": "You argue about lightning for an hour. You both come away sharper.",
+                    "effects": [{"type": "stat_change", "stat": "int", "value": 2}],
+                    "requires": {"class": "Mage"}
+                },
+                "Politely decline": {"result_text": "'Your loss,' she says cheerfully.", "effects": []}
+            }
+        },
+        "thornwick_dice": {
+            "id": 3006,
+            "display_name": "Dice at the Crossroads",
+            "description": "Two Thornwick toughs are throwing dice on an overturned crate. 'Fancy a game? Twenty a throw.'",
+            "tags": ["occurrence"],
+            "choices": {
+                "Bet 20 gold": {
+                    "requires": {"gold": 20},
+                    "chance": 0.45,
+                    "success": {
+                        "result_text": "Double sixes. They pay up, grumbling.",
+                        "effects": [{"type": "gold", "amount": 20}]
+                    },
+                    "failure": {
+                        "result_text": "Snake eyes. They laugh all the way to your purse.",
+                        "effects": [{"type": "gold", "amount": -20}]
+                    }
+                },
+                "Palm a die (DEX 15)": {
+                    "requires": {"stat": {"dex": 15}},
+                    "chance": 0.75,
+                    "success": {
+                        "result_text": "Nobody notices. You leave considerably richer.",
+                        "effects": [{"type": "gold", "amount": 40}]
+                    },
+                    "failure": {
+                        "result_text": "'Cheat!' Knives come out.",
+                        "effects": [{"type": "combat", "enemies": ["road_bandit", "road_bandit"]}]
+                    }
+                },
+                "Watch for a while": {"result_text": "You learn several new swear words.", "effects": []}
+            }
+        },
+        "sparring_circle": {
+            "id": 3007,
+            "display_name": "A Sparring Circle",
+            "description": "Travellers have chalked a ring in the dirt. A big man in the middle is taking all comers for a purse.",
+            "tags": ["occurrence"],
+            "choices": {
+                "Step into the ring": {
+                    "result_text": "You win the purse and a round of applause.",
+                    "effects": [{"type": "combat", "enemies": ["pit_brawler"]}, {"type": "gold", "amount": 35}]
+                },
+                "Show them real technique (Martial Artist)": {
+                    "result_text": "You put him down with one finger. The crowd goes quiet, then wild.",
+                    "effects": [{"type": "gold", "amount": 25}, {"type": "stat_change", "stat": "dex", "value": 1}],
+                    "requires": {"class": "Martial Artist"}
+                },
+                "Keep walking": {"result_text": "You have enough bruises.", "effects": []}
+            }
+        },
+        "marsh_hermit": {
+            "id": 3008,
+            "display_name": "The Marsh Hermit",
+            "description": "An old woman on a stilt-house porch waves you up out of the fog. 'Sit. You look like the road's been chewing you.'",
+            "tags": ["occurrence", "reward"],
+            "choices": {
+                "Share her fire": {
+                    "result_text": "She feeds you eel stew and presses two vials into your hand.",
+                    "effects": [{"type": "heal", "amount": 30}, {"type": "item", "item_id": "antivenom", "quantity": 2}]
+                },
+                "Ask about the Dusk": {
+                    "description": "'It doesn't hunt. It just... arrives. Like evening. Want something to keep it off you?'",
+                    "choices": {
+                        "Accept her bitter charm (+3 INT, -10 max HP)": {
+                            "result_text": "It tastes like pennies and regret. Your thoughts are very clear.",
+                            "effects": [
+                                {"type": "stat_change", "stat": "int", "value": 3},
+                                {"type": "stat_change", "stat": "max_health", "value": -10}
+                            ]
+                        },
+                        "Accept her heavy charm (+3 CON, -5 Speed)": {
+                            "result_text": "You feel rooted, sturdy and slow.",
+                            "effects": [
+                                {"type": "stat_change", "stat": "con", "value": 3},
+                                {"type": "stat_change", "stat": "speed", "value": -5}
+                            ]
+                        },
+                        "Decline politely": {"result_text": "'Suit yourself, dearie.'", "effects": []}
+                    }
+                }
+            },
+            "once_per_run": true
+        },
+        "drowned_chapel": {
+            "id": 3009,
+            "display_name": "The Drowned Chapel",
+            "description": "A chapel stands knee-deep in the marsh. Its bell still hangs in the tower.",
+            "tags": ["occurrence"],
+            "choices": {
+                "Search the flooded nave": {
+                    "chance": 0.5,
+                    "success": {
+                        "result_text": "Under a pew, a Keeper's satchel.",
+                        "effects": [
+                            {"type": "item", "item_id": "hearth_loaf", "quantity": 1},
+                            {"type": "gold", "amount": 20}
+                        ]
+                    },
+                    "failure": {
+                        "result_text": "You slip into a sinkhole and come up choking.",
+                        "effects": [{"type": "hurt", "amount": 20}]
+                    }
+                },
+                "Ring the bell": {
+                    "result_text": "When the echoes fade, you find what they were guarding.",
+                    "effects": [
+                        {"type": "combat", "enemies": ["hollow", "gloom_bat"]},
+                        {"type": "item", "item_id": "sun_lantern", "quantity": 1},
+                        {"type": "gold", "amount": 25}
+                    ]
+                },
+                "Leave it to the water": {"result_text": "Some places should be left to sink.", "effects": []}
+            },
+            "min_level": 4
+        },
+        "lantern_keepers": {
+            "id": 3010,
+            "display_name": "Lantern Keepers' Camp",
+            "description": "Keepers in grey coats are refilling a waystation's great lantern. One waves you over.",
+            "tags": ["occurrence", "reward"],
+            "choices": {
+                "Help haul the oil": {
+                    "result_text": "They thank you with coin and a hot meal.",
+                    "effects": [{"type": "gold", "amount": 15}, {"type": "heal", "amount": 20}]
+                },
+                "Buy lantern oil (30 gold)": {
+                    "result_text": "'Open it all at once and stand back,' they advise.",
+                    "effects": [
+                        {"type": "gold", "amount": -30},
+                        {"type": "item", "item_id": "sun_lantern", "quantity": 1}
+                    ],
+                    "requires": {"gold": 30}
+                },
+                "Bless the flame (Priest)": {
+                    "result_text": "The great lantern flares white. The Keepers bow. You feel it in your bones.",
+                    "effects": [
+                        {"type": "restore", "resource": "all"},
+                        {"type": "heal", "amount": 40},
+                        {"type": "stat_change", "stat": "wis", "value": 1}
+                    ],
+                    "requires": {"class": "Priest"}
+                }
+            }
+        },
+        "wounded_knight": {
+            "id": 3011,
+            "display_name": "A Knight at the Roadside",
+            "description": "A knight sits against a milestone, grey creeping up his neck. 'Before it takes me... give me a death with a sword in my hand.'",
+            "tags": ["occurrence"],
+            "choices": {
+                "Grant him a duel": {
+                    "result_text": "He falls smiling. You take his rations; he would have wanted that.",
+                    "effects": [
+                        {"type": "combat", "enemies": ["dusk_knight"]},
+                        {"type": "item", "item_id": "hearth_loaf", "quantity": 1},
+                        {"type": "gold", "amount": 30}
+                    ]
+                },
+                "Pray with him (Priest)": {
+                    "result_text": "He goes quietly, and the grey goes with him. You feel steadier.",
+                    "effects": [{"type": "stat_change", "stat": "con", "value": 2}, {"type": "heal", "amount": 20}],
+                    "requires": {"class": "Priest"}
+                },
+                "Leave him be": {"result_text": "He doesn't watch you go.", "effects": []}
+            },
+            "min_level": 6
+        },
+        "peddler_wagon": {
+            "id": 3012,
+            "display_name": "A Peddler's Wagon",
+            "description": "A peddler with a wagon full of clinking jars blocks half the road. Two bored guards lean on it.",
+            "tags": ["occurrence"],
+            "choices": {
+                "Browse the wares": {
+                    "description": "'Everything must go! The world's ending, you know.'",
+                    "choices": {
+                        "Waybread x2 (25 gold)": {
+                            "effects": [
+                                {"type": "gold", "amount": -25},
+                                {"type": "item", "item_id": "waybread", "quantity": 2}
+                            ],
+                            "requires": {"gold": 25}
+                        },
+                        "Bluebell Tonic (18 gold)": {
+                            "effects": [
+                                {"type": "gold", "amount": -18},
+                                {"type": "item", "item_id": "bluebell_tonic", "quantity": 1}
+                            ],
+                            "requires": {"gold": 18}
+                        },
+                        "Firepot (30 gold)": {
+                            "effects": [
+                                {"type": "gold", "amount": -30},
+                                {"type": "item", "item_id": "firepot", "quantity": 1}
+                            ],
+                            "requires": {"gold": 30}
+                        },
+                        "Nothing today": {"result_text": "He shrugs. 'Your funeral.'", "effects": []}
+                    }
+                },
+                "Rob the peddler": {
+                    "chance": 0.35,
+                    "success": {
+                        "result_text": "The guards are slow. You are not.",
+                        "effects": [
+                            {"type": "gold", "amount": 50},
+                            {"type": "item", "item_id": "firepot", "quantity": 1}
+                        ]
+                    },
+                    "failure": {
+                        "result_text": "The guards are less bored than they looked.",
+                        "effects": [{"type": "combat", "enemies": ["road_bandit", "road_bandit"]}]
+                    }
+                },
+                "Wave and pass": {"result_text": "He waves back with a jar of something purple.", "effects": []}
+            }
+        },
+        "ember_well": {
+            "id": 3013,
+            "display_name": "The Ember Well",
+            "description": "An old well in Cinderhold. Warm light rises from the water instead of reflecting on it.",
+            "tags": ["occurrence", "reward"],
+            "choices": {
+                "Drink": {
+                    "chance": 0.7,
+                    "success": {
+                        "result_text": "Warmth floods through you. Every ache is gone.",
+                        "effects": [{"type": "heal", "amount": 40}, {"type": "restore", "resource": "all"}]
+                    },
+                    "failure": {"result_text": "It burns going down.", "effects": [{"type": "hurt", "amount": 12}]}
+                },
+                "Fill a pot with embers": {
+                    "result_text": "You seal a clay pot full of glowing water.",
+                    "effects": [{"type": "item", "item_id": "firepot", "quantity": 1}]
+                }
+            },
+            "min_level": 6
         }
     },
     "preconstructed_ordeals": {
-        "bandit_ambush": {
+        "bandit_toll": {
             "id": 4001,
-            "display_name": "Bandit Ambush",
-            "description": "Masked figures step out from the trees. 'Your purse or your life.'",
-            "tags": ["tier1", "ordeal"],
-            "enemies": ["bandit_captain", "ruffian", "ruffian"]
+            "display_name": "The Bandit Toll",
+            "description": "A barricade of carts across the road. 'Toll's everything you're carrying.'",
+            "tags": ["ordeal"],
+            "enemies": ["bandit_chief", "road_bandit"],
+            "min_level": 3
         },
-        "lizardman_warband": {
+        "hag_garden": {
             "id": 4002,
-            "display_name": "Lizardman Warband",
-            "description": "A chieftain in a bone crown hisses orders to his kin.",
-            "tags": ["tier1", "ordeal"],
-            "enemies": ["lizardman_chief", "lizardman", "sand_lizard"]
+            "display_name": "The Hag's Garden",
+            "description": "The path runs through a garden of pale mushrooms. Someone is tending them.",
+            "tags": ["ordeal"],
+            "enemies": ["bog_hag", "spore_cap"],
+            "min_level": 5
+        },
+        "hound_pack": {
+            "id": 4003,
+            "display_name": "The Hunting Pack",
+            "description": "Howls on every side. They have been following you since dusk.",
+            "tags": ["ordeal"],
+            "enemies": ["dusk_hound", "ash_wolf"],
+            "min_level": 7
         }
     },
     "boss_events": {
-        "flamesgrace_guardian": {
+        "warden_gate": {
             "id": 5001,
-            "display_name": "The Guardian of the First Flame",
-            "description": "The sacred flame rises from its brazier and takes shape. It will not let you pass.",
-            "tags": ["tier1", "boss_event"],
-            "enemies": ["guardian_of_the_first_flame"]
+            "display_name": "Ashgate: The Warden",
+            "description": "The first gate rises out of the ash, and its guardian with it.",
+            "tags": ["boss_event"],
+            "enemies": ["ashgate_warden"]
         },
-        "clearbrook_viper": {
+        "moth_gate": {
             "id": 5002,
-            "display_name": "The Blotted Viper",
-            "description": "A serpent mottled with sickly purple uncoils from the cave mouth.",
-            "tags": ["tier1", "boss_event"],
-            "enemies": ["blotted_viper"]
+            "display_name": "Ashgate: The Mother of Moths",
+            "description": "At Ashgate the lanterns are all out. Something has been eating the light.",
+            "tags": ["boss_event"],
+            "enemies": ["mother_of_moths"]
         }
     }
 }

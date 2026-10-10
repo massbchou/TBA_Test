@@ -1,7 +1,7 @@
 {
   "player": {
-    "exp_formula": "base_exp * (1.1 ** (level - 1))",
-    "exp_base": 100,
+    "exp_formula": "base_exp * (1.25 ** (level - 1))",
+    "exp_base": 50,
     "level_up_perk_choices": 3,
     "derived_stats": {
       "max_stamina": "40 + 5 * (con - 10)",
@@ -15,24 +15,31 @@
     "distributions": {
       "regular": {
         "regular_combat": 45,
-        "ordeal_combat": 15,
-        "normal_occurrence": 25,
-        "reward_occurrence": 10,
-        "rest_stop": 5
+        "ordeal_combat": 12,
+        "normal_occurrence": 22,
+        "reward_occurrence": 9,
+        "rest_stop": 12
       },
       "mystery": {
-        "regular_combat": 45,
-        "ordeal_combat": 15,
-        "normal_occurrence": 25,
-        "reward_occurrence": 10,
-        "rest_stop": 5
+        "regular_combat": 15,
+        "ordeal_combat": 25,
+        "normal_occurrence": 15,
+        "reward_occurrence": 30,
+        "rest_stop": 15
       }
+    },
+    "min_level": {
+      "ordeal_combat": 3,
+      "rest_stop": 2
+    },
+    "pre_boss_rest": true,
+    "shop": {
+      "stock_size": 4
     }
   },
   "combat": {
     "round_time_units": 12500,
     "reference_speed": 125,
-    "stamina_regen_per_turn": 5,
     "defend_formula": "5+CON/2",
     "run": {
       "base_chance": 50,
@@ -47,50 +54,92 @@
     "rules_by_level_range": [
       {
         "min_level": 1,
-        "max_level": 5,
+        "max_level": 3,
         "regular_combat": {
           "enemy_count_weights": {
             "1": 100
-          }
+          },
+          "enemy_tags": [
+            "early"
+          ]
         },
         "ordeal_combat": {
-          "random_ordeal_weight": 60,
-          "preconstructed_ordeal_weight": 40,
+          "random_ordeal_weight": 50,
+          "preconstructed_ordeal_weight": 50,
           "random_composition": {
             "elite_count_weights": {
               "1": 100
             },
             "normal_count_weights": {
-              "0": 50,
-              "1": 50
+              "0": 60,
+              "1": 40
             }
           }
         }
       },
       {
-        "min_level": 6,
-        "max_level": 15,
+        "min_level": 4,
+        "max_level": 6,
         "regular_combat": {
           "enemy_count_weights": {
-            "1": 66,
-            "2": 34
-          }
+            "1": 55,
+            "2": 45
+          },
+          "enemy_tags": [
+            "mid"
+          ]
         },
         "ordeal_combat": {
-          "random_ordeal_weight": 60,
-          "preconstructed_ordeal_weight": 40,
+          "random_ordeal_weight": 50,
+          "preconstructed_ordeal_weight": 50,
           "random_composition": {
             "elite_count_weights": {
               "1": 100
             },
             "normal_count_weights": {
-              "0": 20,
-              "1": 50,
-              "2": 30
+              "0": 60,
+              "1": 40
+            }
+          }
+        }
+      },
+      {
+        "min_level": 7,
+        "max_level": 99,
+        "regular_combat": {
+          "enemy_count_weights": {
+            "1": 35,
+            "2": 65
+          },
+          "enemy_tags": [
+            "late",
+            "mid"
+          ]
+        },
+        "ordeal_combat": {
+          "random_ordeal_weight": 50,
+          "preconstructed_ordeal_weight": 50,
+          "random_composition": {
+            "elite_count_weights": {
+              "1": 100
+            },
+            "normal_count_weights": {
+              "0": 60,
+              "1": 40
             }
           }
         }
       }
+    ],
+    "resource_regen": {
+      "stamina": 5,
+      "mana": 2
+    },
+    "post_victory_restore": 0.25,
+    "physical_types": [
+      "PHYSICAL",
+      "SWORD",
+      "STAFF"
     ]
   }
 }

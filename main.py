@@ -26,7 +26,7 @@ def select_starting_class(loader: DataLoader, input_provider: InputProvider) -> 
     return chosen
 
 
-def print_run_summary(state: GameState, outcome: str) -> None:
+def print_run_summary(state: GameState, outcome: str, loader: DataLoader) -> None:
     p = state.player
     stats = state.run_stats
     print("\n" + "-" * 60)
@@ -35,7 +35,7 @@ def print_run_summary(state: GameState, outcome: str) -> None:
         print(f"  Slain by: {stats['cause_of_death']}")
     print(f"  Level {p.level} | Enemies defeated: {stats.get('enemies_defeated', 0)} | Gold earned: {stats.get('gold_earned', 0)}")
     if p.perks:
-        print(f"  Perks: {', '.join(p.perks)}")
+        print(f"  Perks: {', '.join(loader.perk_name(pid) for pid in p.perks)}")
     print("-" * 60)
 
 
@@ -125,6 +125,9 @@ def main(argv: list[str] | None = None) -> None:
         labels = [event.get_choice_label() for event in choices]
         chosen_event = choices[input_provider.choose("You perceive multiple paths ahead:", labels)]
         print(f"\n>> Venturing down: {chosen_event.get_choice_label()}")
+        if chosen_event.is_mystery:
+            chosen_event.is_mystery = False
+            print(f"   The fog parts... {chosen_event.get_choice_label()}")
 
         event_success = chosen_event.execute(game_state, combat_system)
         if not event_success:
@@ -138,10 +141,12 @@ def main(argv: list[str] | None = None) -> None:
 
         game_state.advance_level()
 
-    if outcome != "saved":
-        if not args.auto:
-            save_manager.delete(save_manager.save_path(player.name, save_dir))  # roguelike: a finished run can't be resumed
-        print_run_summary(game_state, outcome)
+    if outcome == "saved":
+        print("\nYour lantern is banked for the night. The road will wait.")
+        return
+    if not args.auto:
+        save_manager.delete(save_manager.save_path(player.name, save_dir))  # roguelike: a finished run can't be resumed
+    print_run_summary(game_state, outcome, loader)
 
     print("\n" + "=" * 60)
     print("                        GAME OVER                          ")

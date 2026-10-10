@@ -64,6 +64,7 @@ class Combat:
         if not self.resource_regen and combat_cfg.get("stamina_regen_per_turn"):
             self.resource_regen = {"stamina": int(combat_cfg["stamina_regen_per_turn"])}
         self.post_victory_restore = float(combat_cfg.get("post_victory_restore", 0))
+        self.min_speed_fraction = float(combat_cfg.get("min_speed_fraction", 0.5))
         self.actions: ActionRegistry = data_loader.actions if data_loader else ActionRegistry.build()
         self.action_orchestrator = action_orchestrator or ActionOrchestrator(data_loader)
         self.ai_controller = ai_controller or AIController(data_loader, actions=self.actions)
@@ -97,6 +98,9 @@ class Combat:
         self.narrate("\n================== COMBAT STARTS ==================")
         self.narrate(f"Hero: {self.player.name} (HP: {self.player.health}/{self.player.get_stat('max_health')}, Speed: {self.player.get_stat('speed')})")
         for enemy in self.enemies:
+            if enemy.intro:
+                self.narrate(f"  {enemy.intro}")
+        for enemy in self.enemies:
             self.narrate(f"Enemy: {enemy.name} (HP: {enemy.health}/{enemy.get_stat('max_health')}, Speed: {enemy.get_stat('speed')})")
 
         for p in battle.participants:
@@ -123,8 +127,7 @@ class Combat:
                     actor.restore_resource(resource, amount)
             battle.end_turn(actor)
 
-            speed = max(1, int(actor.get_stat("speed") or 1))
-            actor.action_time += max(1, self.round_time_units // speed)
+            actor.action_time += max(1, self.round_time_units // self._turn_speed(actor))
 
             turns += 1
             if turns >= MAX_TURNS:
@@ -156,6 +159,12 @@ class Combat:
         if battle.fled:
             return CombatResult.FLED
         return CombatResult.VICTORY
+
+    def _turn_speed(self, actor: Character) -> int:
+        """Speed used for turn cost. Debuffs can't push it below ``min_speed_fraction`` of base speed,
+        so stacked slows can never lock a character out of the fight."""
+        floor = actor.base_stat("speed") * self.min_speed_fraction
+        return max(1, int(max(actor.get_stat("speed"), floor)))
 
     @staticmethod
     def _next_actor(battle: Battle) -> Character:
@@ -204,8 +213,7 @@ class Combat:
             menu.append("Technique")
         if player.spells:
             menu.append("Cast")
-        if self._usable_items():
-            menu.append("Bag")
+        menu.append("Bag" if self._usable_items() else "Bag (empty)")  # always shown, so numbering stays stable
         menu.append("Run")
 
         action: ActionDef | None = None
@@ -219,7 +227,7 @@ class Combat:
                 action = self._pick_action("Technique", player.abilities, SOURCE_TECHNIQUE)
             elif choice == "Cast":
                 action = self._pick_action("Spell", player.spells, SOURCE_SPELL)
-            elif choice == "Bag":
+            elif choice.startswith("Bag"):
                 action = self._pick_item()
             elif choice == "Run":
                 if battle.allow_run:
@@ -243,7 +251,7 @@ class Combat:
         for a in options:
             cost = ", ".join(f"{v} {k}" for k, v in a.costs.items()) or "free"
             short = "" if self.player.can_afford(a.costs) else "  (not enough resources)"
-            labels.append(f"{a.name} ({cost}){short}")
+            labels.append(f"{a.name} ({cost}){short} - {a.description}")
         idx = self.input.choose(f"Choose a {label.lower()}:", labels + ["Back"])
         if idx == len(options):
             return None
@@ -289,6 +297,10 @@ class Combat:
         total_gold = 0
         items: dict[str, int] = {}
 
+        recovered = sum(getattr(e, "stolen_gold", 0) for e in self.enemies)
+        if recovered:
+            total_gold += recovered
+            self.narrate(f"You take back the {recovered} gold that was stolen from you.")
         for enemy in self.enemies:
             total_exp += int(enemy.get_stat("exp_reward") or (enemy.level * 20))
             for loot in enemy.loot_table:

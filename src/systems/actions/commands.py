@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.models.character import PHYSICAL
-from src.stats import canonical_stat
+from src.stats import canonical_stat, display_name
 from src.systems.actions.context import parse_literal
 from src.systems.actions.registry import register_command
 
@@ -44,17 +44,31 @@ def heal(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
     for target in targets:
         healed = target.heal(ctx.eval_amount(args[0]))
         lr.amounts[target.name] = healed
-        ctx.battle.narrate(f"  {target.name} recovers {healed} HP. (HP {_hp(target)})")
+        if healed > 0:
+            ctx.battle.narrate(f"  {target.name} recovers {healed} HP. (HP {_hp(target)})")
 
 
 def _modify(ctx: "ExecutionContext", targets, args, lr: "LineResult", sign: int) -> None:
+    """Adds a timed stat modifier. Re-applying the same action's modifier refreshes it
+    instead of stacking, unless the action is tagged ``stacks``."""
     stat = canonical_stat(args[0])
+    source = ctx.action.id if ctx.action else ""
+    stacks = ctx.action is not None and ctx.action.has_tag("stacks")
     for target in targets:
         amount = sign * ctx.eval_amount(args[1])
         timer = ctx.make_timer(args[2], target) if len(args) > 2 else None
-        target.add_modifier(stat, amount, timer, source=ctx.action.id if ctx.action else "")
+        refreshed = False
+        if source and not stacks:
+            before = len(target.modifiers)
+            target.modifiers = [m for m in target.modifiers if not (m.source == source and m.stat == stat)]
+            refreshed = len(target.modifiers) < before
+        target.add_modifier(stat, amount, timer, source=source)
         lr.amounts[target.name] = amount
-        ctx.battle.narrate(f"  {target.name}'s {stat.upper()} {'rises' if amount >= 0 else 'falls'} by {abs(amount)}.")
+        name = display_name(stat)
+        if refreshed:
+            ctx.battle.narrate(f"  {target.name}'s {name} {'boost' if amount >= 0 else 'penalty'} is renewed.")
+        else:
+            ctx.battle.narrate(f"  {target.name}'s {name} {'rises' if amount >= 0 else 'falls'} by {abs(amount)}.")
 
 
 @register_command("BUFF", ["stat", "amount", "duration?"])
@@ -78,8 +92,11 @@ def apply_status(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> No
         lr.amounts[target.name] = 1 if outcome != "ignored" else 0
         if outcome == "ignored":
             continue
-        ctx.battle.narrate(f"  {target.name} is afflicted with {name}." if outcome == "applied"
-                           else f"  {target.name}'s {name} is {outcome}.")
+        if outcome == "applied":
+            is_buff = status_def is not None and "buff" in status_def.tags
+            ctx.battle.narrate(f"  {target.name} {'gains' if is_buff else 'is afflicted with'} {name}.")
+        else:
+            ctx.battle.narrate(f"  {target.name}'s {name} is {outcome}.")
         status = target.get_status(name)
         if status is not None:
             ctx.battle.run_status_hook(target, status, "on_apply")
@@ -100,7 +117,8 @@ def restore(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
     for target in targets:
         restored = target.restore_resource(resource, ctx.eval_amount(args[1]))
         lr.amounts[target.name] = restored
-        ctx.battle.narrate(f"  {target.name} restores {restored} {resource.upper()}.")
+        if restored > 0:
+            ctx.battle.narrate(f"  {target.name} restores {restored} {display_name(resource)}.")
 
 
 @register_command("CLEANSE", ["status_or_all"])
@@ -142,5 +160,7 @@ def lose_gold(ctx: "ExecutionContext", targets, args, lr: "LineResult") -> None:
         amount = min(target.gold, max(0, ctx.eval_amount(args[0])))
         target.gold -= amount
         lr.amounts[target.name] = amount
+        if hasattr(ctx.caster, "stolen_gold"):
+            ctx.caster.stolen_gold += amount  # recovered if the thief is defeated
         if amount:
             ctx.battle.narrate(f"  {target.name} loses {amount} gold!")

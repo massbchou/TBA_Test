@@ -1,194 +1,249 @@
 {
-    "level_slash": {
+    "cleave": {
         "id": 101,
-        "name": "Level Slash",
-        "description": "Sweep the blade through every foe.",
-        "tags": ["warrior", "sword", "offensive", "aoe"],
-        "costs": {"stamina": 14},
-        "action_string": "DAMAGE ALL_ENEMIES 0.8*STR SWORD"
+        "name": "Cleave",
+        "description": "A wide sword sweep that hits every foe.",
+        "tags": ["warrior", "offensive", "aoe"],
+        "costs": {"stamina": 12},
+        "action_string": "DAMAGE ALL_ENEMIES 0.9*STR SWORD"
     },
-    "thousand_spears": {
+    "sunder": {
         "id": 102,
-        "name": "Thousand Spears",
-        "description": "A flurry of spear thrusts at random foes.",
-        "tags": ["warrior", "spear", "offensive"],
-        "costs": {"stamina": 20},
-        "action_string": "DAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR\nDAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR\nDAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR\nDAMAGE 1_ENEMY RANDOM 0.45*STR SPEAR"
+        "name": "Sunder",
+        "description": "Crack a foe's guard: damage, -4 Defense and Sundered for 3 turns.",
+        "tags": ["warrior", "offensive", "debuff"],
+        "costs": {"stamina": 10},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.1*STR SWORD\nDEBUFF PREVIOUS_TARGETS DEFENSE 4 3_TURNS\nAPPLY SPECIFIC_TARGET target1.1 SUNDERED 3_TURNS"
     },
-    "abide": {
+    "heavy_blow": {
         "id": 103,
-        "name": "Abide",
-        "description": "Steel yourself, raising Strength for 3 turns.",
-        "tags": ["warrior", "buff"],
+        "name": "Heavy Blow",
+        "description": "A crushing two-handed strike. Hits again if the target is Sundered.",
+        "tags": ["warrior", "offensive"],
+        "costs": {"stamina": 16},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.6*STR SWORD\nIF SPECIFIC_TARGET target1.1 HAS_STATUS SUNDERED DAMAGE SPECIFIC_TARGET target1.1 0.9*STR SWORD"
+    },
+    "rally": {
+        "id": 104,
+        "name": "Rally",
+        "description": "Steady your breathing: +4 STR for 3 turns. Stacks.",
+        "tags": ["warrior", "buff", "stacks"],
         "costs": {"stamina": 8},
         "action_string": "BUFF SELF STR 4 3_TURNS"
     },
-    "rain_of_arrows": {
+    "flurry": {
         "id": 111,
-        "name": "Rain of Arrows",
-        "description": "Loose three arrows at random foes.",
-        "tags": ["hunter", "bow", "offensive"],
-        "costs": {"stamina": 16},
-        "action_string": "DAMAGE 1_ENEMY RANDOM 0.6*DEX BOW\nDAMAGE 1_ENEMY RANDOM 0.6*DEX BOW\nDAMAGE 1_ENEMY RANDOM 0.6*DEX BOW"
-    },
-    "true_strike": {
-        "id": 112,
-        "name": "True Strike",
-        "description": "A single, perfectly aimed shot.",
-        "tags": ["hunter", "bow", "offensive"],
+        "name": "Flurry",
+        "description": "Three quick blows at random foes.",
+        "tags": ["martial", "offensive"],
         "costs": {"stamina": 12},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.6*DEX BOW"
+        "action_string": "DAMAGE 1_ENEMY RANDOM 0.55*DEX PHYSICAL\nDAMAGE 1_ENEMY RANDOM 0.55*DEX PHYSICAL\nDAMAGE 1_ENEMY RANDOM 0.55*DEX PHYSICAL"
     },
-    "leghold_trap": {
+    "pressure_point": {
+        "id": 112,
+        "name": "Pressure Point",
+        "description": "A precise jab that Marks the target for 3 turns.",
+        "tags": ["martial", "offensive", "debuff"],
+        "costs": {"stamina": 8},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 0.7*DEX PHYSICAL\nAPPLY PREVIOUS_TARGETS MARKED 3_TURNS"
+    },
+    "finishing_strike": {
         "id": 113,
-        "name": "Leghold Trap",
-        "description": "Snare a foe, slowing it for 3 turns.",
-        "tags": ["hunter", "debuff"],
+        "name": "Finishing Strike",
+        "description": "A full-body strike. Against a Marked foe, a second blow follows and the Mark is spent.",
+        "tags": ["martial", "offensive"],
+        "costs": {"stamina": 14},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.2*DEX PHYSICAL\nIF SPECIFIC_TARGET target1.1 HAS_STATUS MARKED DAMAGE SPECIFIC_TARGET target1.1 1.1*DEX PHYSICAL\nCLEANSE SPECIFIC_TARGET target1.1 MARKED"
+    },
+    "drain_palm": {
+        "id": 114,
+        "name": "Drain Palm",
+        "description": "Strike and draw strength from the blow: heals half the damage dealt.",
+        "tags": ["martial", "offensive", "healing"],
         "costs": {"stamina": 10},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 0.9*DEX PHYSICAL\nHEAL SELF 2+PREVIOUS_DAMAGE_DEALT/2"
+    },
+    "rebuke": {
+        "id": 121,
+        "name": "Rebuke",
+        "description": "A blessed staff strike, for when the mana runs dry.",
+        "tags": ["priest", "offensive"],
+        "costs": {"stamina": 8},
+        "action_string": "DAMAGE 1_ENEMY CHOICE 1.0*STR+WIS/2 STAFF"
+    },
+    "snare": {
+        "id": 131,
+        "name": "Snare",
+        "description": "A hunter's trick: -40 Speed to one foe for 3 turns.",
+        "tags": ["perk", "debuff"],
+        "costs": {"stamina": 8},
         "action_string": "DEBUFF 1_ENEMY CHOICE SPEED 40 3_TURNS"
     },
-    "rest": {
-        "id": 121,
-        "name": "Rest",
-        "description": "Catch your breath: recover stamina and a little health.",
-        "tags": ["merchant", "recovery"],
-        "costs": {},
-        "action_string": "RESTORE SELF STAMINA 30\nHEAL SELF 10"
-    },
-    "wildfire": {
-        "id": 131,
-        "name": "Wildfire",
-        "description": "Scatter burning embers over every foe.",
-        "tags": ["thief", "fire", "offensive", "aoe"],
-        "costs": {"stamina": 16},
-        "action_string": "DAMAGE ALL_ENEMIES 0.7*DEX FIRE"
-    },
-    "shackle_foe": {
+    "collect": {
         "id": 132,
-        "name": "Shackle Foe",
-        "description": "Bind a foe, lowering its Strength for 3 turns.",
-        "tags": ["thief", "debuff"],
+        "name": "Collector's Strike",
+        "description": "Hit a foe and lift a few coins off it.",
+        "tags": ["perk", "offensive"],
         "costs": {"stamina": 8},
-        "action_string": "DEBUFF 1_ENEMY CHOICE STR 5 3_TURNS"
+        "action_string": "DAMAGE 1_ENEMY CHOICE 0.9*STR+DEX/4 PHYSICAL\nGAIN_GOLD SELF 3-8"
     },
-    "hp_thief": {
-        "id": 133,
-        "name": "HP Thief",
-        "description": "Stab a foe and drink half the wound.",
-        "tags": ["thief", "dagger", "offensive", "drain"],
-        "costs": {"stamina": 12},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.0*DEX DAGGER\nHEAL SELF PREVIOUS_DAMAGE_DEALT/2"
-    },
-    "first_aid": {
-        "id": 141,
-        "name": "First Aid",
-        "description": "Patch yourself up and treat ailments.",
-        "tags": ["apothecary", "healing"],
-        "costs": {"stamina": 10},
-        "action_string": "HEAL SELF 25+CON\nCLEANSE SELF ALL_DEBUFFS"
-    },
-    "amputation": {
-        "id": 142,
-        "name": "Amputation",
-        "description": "A brutal axe chop.",
-        "tags": ["apothecary", "axe", "offensive"],
-        "costs": {"stamina": 12},
-        "action_string": "DAMAGE 1_ENEMY CHOICE 1.4*STR AXE"
-    },
-    "rehabilitate": {
-        "id": 143,
-        "name": "Rehabilitate",
-        "description": "A tonic that restores health each turn for 3 turns.",
-        "tags": ["apothecary", "healing"],
-        "costs": {"stamina": 10},
-        "action_string": "APPLY SELF REGEN 3_TURNS"
-    },
-    "lion_dance": {
-        "id": 151,
-        "name": "Lion Dance",
-        "description": "A fierce dance that raises Strength for 3 turns.",
-        "tags": ["dancer", "buff"],
-        "costs": {"stamina": 8},
-        "action_string": "BUFF SELF STR 5 3_TURNS"
-    },
-    "e_slash": {
+    "e_gnaw": {
         "id": 901,
-        "name": "Slash",
+        "name": "Gnaw",
         "description": "",
-        "tags": ["enemy", "physical"],
-        "costs": {},
-        "action_string": "DAMAGE 1_ENEMY 1.2*STR PHYSICAL"
-    },
-    "e_bite": {
-        "id": 902,
-        "name": "Bite",
-        "description": "",
-        "tags": ["enemy", "physical"],
+        "tags": ["enemy"],
         "costs": {},
         "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL"
     },
-    "e_venom_fang": {
-        "id": 903,
-        "name": "Venom Fang",
+    "e_plague_bite": {
+        "id": 902,
+        "name": "Plague Bite",
         "description": "",
-        "tags": ["enemy", "physical", "poison"],
+        "tags": ["enemy"],
         "costs": {},
-        "action_string": "DAMAGE 1_ENEMY 0.8*STR PHYSICAL\nAPPLY PREVIOUS_TARGETS POISON 3_TURNS"
+        "action_string": "DAMAGE 1_ENEMY 0.6*STR PHYSICAL\nAPPLY PREVIOUS_TARGETS POISON 3_TURNS"
+    },
+    "e_slash": {
+        "id": 903,
+        "name": "Slash",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.2*STR PHYSICAL"
+    },
+    "e_pickpocket": {
+        "id": 904,
+        "name": "Pickpocket",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 0.6*STR PHYSICAL\nLOSE_GOLD PREVIOUS_TARGETS 4-10",
+        "message": "{caster}'s hand darts toward your purse!"
+    },
+    "e_dazzle": {
+        "id": 905,
+        "name": "Dazzling Wings",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DEBUFF 1_ENEMY STR 3 2_TURNS",
+        "message": "{caster}'s wings flare with stolen lantern light."
+    },
+    "e_wing_slap": {
+        "id": 906,
+        "name": "Wing Slap",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 0.9*STR PHYSICAL"
+    },
+    "e_tongue_lash": {
+        "id": 907,
+        "name": "Tongue Lash",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.1*STR PHYSICAL"
+    },
+    "e_bloat": {
+        "id": 908,
+        "name": "Brace",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "BUFF SELF DEFENSE 4 2_TURNS",
+        "message": "{caster} hunkers down and braces."
+    },
+    "e_grasp": {
+        "id": 909,
+        "name": "Hollow Grasp",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS SPEED 25 2_TURNS"
+    },
+    "e_rend": {
+        "id": 910,
+        "name": "Rend",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS DEFENSE 3 2_TURNS"
     },
     "e_blood_drain": {
-        "id": 904,
+        "id": 911,
         "name": "Blood Drain",
         "description": "",
-        "tags": ["enemy", "physical", "drain"],
+        "tags": ["enemy"],
         "costs": {},
-        "action_string": "DAMAGE 1_ENEMY 0.8*STR PHYSICAL\nHEAL SELF PREVIOUS_DAMAGE_DEALT"
+        "action_string": "DAMAGE 1_ENEMY 0.9*STR PHYSICAL\nHEAL SELF PREVIOUS_DAMAGE_DEALT"
     },
-    "e_drowsy_spores": {
-        "id": 905,
-        "name": "Drowsy Spores",
+    "e_bite": {
+        "id": 912,
+        "name": "Bite",
         "description": "",
-        "tags": ["enemy", "debuff"],
+        "tags": ["enemy"],
         "costs": {},
-        "action_string": "DEBUFF 1_ENEMY SPEED 30 2_TURNS"
+        "action_string": "DAMAGE 1_ENEMY 1.1*STR PHYSICAL"
     },
-    "e_spear_thrust": {
-        "id": 906,
-        "name": "Spear Thrust",
+    "e_howl": {
+        "id": 913,
+        "name": "Howl",
         "description": "",
-        "tags": ["enemy", "physical"],
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "BUFF ALL_ALLIES STR 3 3_TURNS",
+        "message": "{caster} howls, and the pack answers."
+    },
+    "e_heavy_slash": {
+        "id": 914,
+        "name": "Heavy Slash",
+        "description": "",
+        "tags": ["enemy"],
         "costs": {},
         "action_string": "DAMAGE 1_ENEMY 1.4*STR PHYSICAL"
     },
-    "e_war_cry": {
-        "id": 907,
-        "name": "War Cry",
+    "e_shield_up": {
+        "id": 915,
+        "name": "Raise Shield",
         "description": "",
-        "tags": ["enemy", "buff"],
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "BUFF SELF DEFENSE 6 2_TURNS",
+        "message": "{caster} raises a battered tower shield."
+    },
+    "e_frenzy": {
+        "id": 916,
+        "name": "Frenzy",
+        "description": "",
+        "tags": ["enemy"],
+        "costs": {},
+        "action_string": "BUFF SELF STR 6 3_TURNS",
+        "message": "{caster} foams and snarls, wild with pain."
+    },
+    "e_rallying_shout": {
+        "id": 917,
+        "name": "Rallying Shout",
+        "description": "",
+        "tags": ["enemy"],
         "costs": {},
         "action_string": "BUFF ALL_ALLIES STR 3 3_TURNS"
     },
-    "e_tail_whip": {
-        "id": 908,
-        "name": "Tail Whip",
+    "e_gate_strike": {
+        "id": 918,
+        "name": "Gate Strike",
         "description": "",
-        "tags": ["enemy", "physical"],
+        "tags": ["enemy"],
         "costs": {},
-        "action_string": "DAMAGE 1_ENEMY 1.1*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS DEFENSE 3 2_TURNS"
+        "action_string": "DAMAGE 1_ENEMY 1.3*STR PHYSICAL"
     },
-    "e_ember_shield": {
-        "id": 909,
-        "name": "Ember Shield",
+    "e_tower_wall": {
+        "id": 919,
+        "name": "Tower Wall",
         "description": "",
-        "tags": ["enemy", "buff"],
+        "tags": ["enemy"],
         "costs": {},
-        "action_string": "BUFF SELF DEFENSE 6 2_TURNS\nBUFF SELF ice_resistance 60 2_TURNS"
-    },
-    "e_constrict": {
-        "id": 910,
-        "name": "Constrict",
-        "description": "",
-        "tags": ["enemy", "physical", "debuff"],
-        "costs": {},
-        "action_string": "DAMAGE 1_ENEMY 1.0*STR PHYSICAL\nDEBUFF PREVIOUS_TARGETS SPEED 30 1_TURN"
+        "action_string": "BUFF SELF DEFENSE 8 2_TURNS",
+        "message": "The Warden plants its tower shield. Your blows will glance off it for a while."
     }
 }

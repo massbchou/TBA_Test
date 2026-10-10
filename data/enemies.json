@@ -1,73 +1,214 @@
 {
-    "ruffian": {
+    "dusk_rat": {
         "id": 1001,
-        "name": "Ruffian",
+        "name": "Dusk Rat",
         "level": 1,
         "category": "Normal",
-        "tags": ["tier1", "normal_enemy", "humanoid", "bandit"],
+        "tags": ["early", "beast", "dusk"],
+        "intro": "A rat the size of a dog, grey fur flickering at the edges.",
         "stats": {
-            "str": 10,
-            "dex": 10,
-            "max_health": 34,
-            "speed": 105,
-            "defense": 3,
-            "exp_reward": 16,
-            "sword_resistance": -50,
-            "fire_resistance": -50
-        },
-        "abilities": [{"ability_id": "e_slash", "cooldowns": {"self": 0}}],
-        "loot_table": [
-            {"type": "gold", "chance": 0.9, "min_amount": 4, "max_amount": 10},
-            {"type": "item", "item_id": "healing_grape", "chance": 0.15, "min_amount": 1, "max_amount": 1}
-        ]
-    },
-    "sand_lizard": {
-        "id": 1002,
-        "name": "Sand Lizard",
-        "level": 1,
-        "category": "Normal",
-        "tags": ["tier1", "normal_enemy", "beast", "lizard"],
-        "stats": {
-            "str": 9,
+            "str": 8,
             "dex": 12,
-            "max_health": 30,
-            "speed": 120,
-            "defense": 4,
-            "exp_reward": 15,
-            "spear_resistance": -50,
-            "ice_resistance": -50
+            "max_health": 22,
+            "speed": 140,
+            "defense": 1,
+            "exp_reward": 26,
+            "fire_resistance": -50,
+            "light_resistance": -50,
+            "dark_resistance": 50
         },
         "abilities": [
-            {"ability_id": "e_bite", "cooldowns": {"self": 0}},
-            {"ability_id": "e_tail_whip", "cooldowns": {"self": 2}}
+            {"ability_id": "e_gnaw", "cooldowns": {"self": 0}},
+            {"ability_id": "e_plague_bite", "cooldowns": {"self": 3}}
         ],
-        "loot_table": [{"type": "gold", "chance": 0.9, "min_amount": 3, "max_amount": 8}],
+        "loot_table": [
+            {"type": "gold", "chance": 0.85, "min_amount": 1, "max_amount": 4},
+            {"type": "item", "item_id": "antivenom", "chance": 0.15, "min_amount": 1, "max_amount": 1}
+        ],
         "attack_scripts": [
             {
                 "activation_condition": "IF SELF",
                 "interruptible": true,
                 "script_lines": [
-                    "use_ability e_bite",
-                    "IF ABILITY e_tail_whip IS_READY { use_ability e_tail_whip } ELSE { use_ability e_bite }"
+                    "IF ABILITY e_plague_bite IS_READY AND PLAYER NOT HAS_STATUS POISON { use_ability e_plague_bite } ELSE { use_ability e_gnaw }"
                 ]
             }
         ]
     },
-    "giant_bat": {
+    "road_bandit": {
+        "id": 1002,
+        "name": "Road Bandit",
+        "level": 1,
+        "category": "Normal",
+        "tags": ["early", "mid", "humanoid", "bandit"],
+        "intro": "A road bandit steps out, eyeing your purse more than you.",
+        "stats": {
+            "str": 10,
+            "dex": 11,
+            "max_health": 32,
+            "speed": 110,
+            "defense": 3,
+            "exp_reward": 30,
+            "staff_resistance": -50,
+            "fire_resistance": -50
+        },
+        "abilities": [
+            {"ability_id": "e_slash", "cooldowns": {"self": 0}},
+            {"ability_id": "e_pickpocket", "cooldowns": {"self": 3}}
+        ],
+        "loot_table": [
+            {"type": "gold", "chance": 0.95, "min_amount": 6, "max_amount": 14},
+            {"type": "item", "item_id": "waybread", "chance": 0.2, "min_amount": 1, "max_amount": 1}
+        ],
+        "attack_scripts": [
+            {
+                "activation_condition": "IF SELF",
+                "interruptible": true,
+                "script_lines": ["use_ability e_pickpocket", "use_ability e_slash", "use_ability e_slash"]
+            }
+        ]
+    },
+    "lantern_moth": {
         "id": 1003,
-        "name": "Giant Bat",
+        "name": "Lantern Moth",
+        "level": 1,
+        "category": "Normal",
+        "tags": ["early", "beast", "dusk"],
+        "intro": "A moth with wings like stolen candle flames.",
+        "stats": {
+            "str": 9,
+            "dex": 14,
+            "max_health": 24,
+            "speed": 125,
+            "defense": 1,
+            "exp_reward": 26,
+            "fire_resistance": -50,
+            "lightning_resistance": -50,
+            "dark_resistance": 50
+        },
+        "abilities": [
+            {"ability_id": "e_wing_slap", "cooldowns": {"self": 0}},
+            {"ability_id": "e_dazzle", "cooldowns": {"self": 3}}
+        ],
+        "loot_table": [
+            {"type": "gold", "chance": 0.85, "min_amount": 1, "max_amount": 5},
+            {"type": "item", "item_id": "bluebell_tonic", "chance": 0.15, "min_amount": 1, "max_amount": 1}
+        ],
+        "attack_scripts": [
+            {
+                "activation_condition": "IF SELF",
+                "interruptible": true,
+                "script_lines": ["use_ability e_dazzle", "use_ability e_wing_slap", "use_ability e_wing_slap"]
+            }
+        ]
+    },
+    "mire_toad": {
+        "id": 1004,
+        "name": "Mire Toad",
         "level": 2,
         "category": "Normal",
-        "tags": ["tier1", "normal_enemy", "beast", "flying"],
+        "tags": ["early", "beast"],
+        "intro": "A toad as wide as a cart wheel blinks at you from the reeds.",
         "stats": {
-            "str": 8,
-            "dex": 14,
-            "max_health": 28,
-            "speed": 140,
-            "defense": 2,
-            "exp_reward": 18,
-            "bow_resistance": -50,
+            "str": 10,
+            "max_health": 42,
+            "speed": 85,
+            "defense": 4,
+            "exp_reward": 32,
             "lightning_resistance": -50,
+            "ice_resistance": -50
+        },
+        "abilities": [
+            {"ability_id": "e_tongue_lash", "cooldowns": {"self": 0}},
+            {"ability_id": "e_bloat", "cooldowns": {"self": 3}}
+        ],
+        "loot_table": [
+            {"type": "gold", "chance": 0.85, "min_amount": 2, "max_amount": 6},
+            {"type": "item", "item_id": "bitterroot", "chance": 0.2, "min_amount": 1, "max_amount": 1}
+        ],
+        "attack_scripts": [
+            {
+                "activation_condition": "IF SELF",
+                "interruptible": true,
+                "script_lines": [
+                    "IF SELF WITH_STAT HP < 60% AND ABILITY e_bloat IS_READY { use_ability e_bloat } ELSE { use_ability e_tongue_lash }"
+                ]
+            }
+        ]
+    },
+    "hollow": {
+        "id": 1005,
+        "name": "Hollow",
+        "level": 4,
+        "category": "Normal",
+        "tags": ["mid", "humanoid", "dusk"],
+        "intro": "A Hollow shuffles toward you, murmuring the name of a village that no longer exists.",
+        "stats": {
+            "str": 14,
+            "max_health": 52,
+            "speed": 100,
+            "defense": 3,
+            "exp_reward": 42,
+            "light_resistance": -50,
+            "fire_resistance": -50,
+            "dark_resistance": 50
+        },
+        "abilities": [{"ability_id": "e_grasp", "cooldowns": {"self": 0}}],
+        "loot_table": [
+            {"type": "gold", "chance": 0.85, "min_amount": 3, "max_amount": 10},
+            {"type": "item", "item_id": "waybread", "chance": 0.15, "min_amount": 1, "max_amount": 1}
+        ]
+    },
+    "marsh_lurker": {
+        "id": 1006,
+        "name": "Marsh Lurker",
+        "level": 4,
+        "category": "Normal",
+        "tags": ["mid", "beast", "lizard"],
+        "intro": "Scales part the black water. A lurker rises, teeth first.",
+        "stats": {
+            "str": 13,
+            "dex": 12,
+            "max_health": 48,
+            "speed": 110,
+            "defense": 5,
+            "exp_reward": 44,
+            "ice_resistance": -50,
+            "staff_resistance": -50,
+            "sword_resistance": 30
+        },
+        "abilities": [
+            {"ability_id": "e_rend", "cooldowns": {"self": 2}},
+            {"ability_id": "e_bite", "cooldowns": {"self": 0}}
+        ],
+        "loot_table": [
+            {"type": "gold", "chance": 0.85, "min_amount": 4, "max_amount": 10},
+            {"type": "item", "item_id": "bitterroot", "chance": 0.15, "min_amount": 1, "max_amount": 1}
+        ],
+        "attack_scripts": [
+            {
+                "activation_condition": "IF SELF",
+                "interruptible": true,
+                "script_lines": ["IF ABILITY e_rend IS_READY { use_ability e_rend } ELSE { use_ability e_bite }"]
+            }
+        ]
+    },
+    "gloom_bat": {
+        "id": 1007,
+        "name": "Gloom Bat",
+        "level": 4,
+        "category": "Normal",
+        "tags": ["mid", "beast", "dusk"],
+        "intro": "Something leathery and fast drops from the fog.",
+        "stats": {
+            "str": 11,
+            "dex": 15,
+            "max_health": 34,
+            "speed": 145,
+            "defense": 2,
+            "exp_reward": 38,
+            "lightning_resistance": -50,
+            "light_resistance": -50,
             "dark_resistance": 50
         },
         "abilities": [
@@ -75,286 +216,377 @@
             {"ability_id": "e_blood_drain", "cooldowns": {"self": 2}}
         ],
         "loot_table": [
-            {"type": "gold", "chance": 0.9, "min_amount": 2, "max_amount": 6},
-            {"type": "item", "item_id": "inspiriting_plum", "chance": 0.1, "min_amount": 1, "max_amount": 1}
+            {"type": "gold", "chance": 0.85, "min_amount": 2, "max_amount": 6},
+            {"type": "item", "item_id": "bluebell_tonic", "chance": 0.15, "min_amount": 1, "max_amount": 1}
         ],
         "attack_scripts": [
             {
                 "activation_condition": "IF SELF",
                 "interruptible": true,
                 "script_lines": [
-                    "IF SELF WITH_STAT HP < 60% AND ABILITY e_blood_drain IS_READY { use_ability e_blood_drain } ELSE { use_ability e_bite }"
+                    "IF SELF WITH_STAT HP < 70% AND ABILITY e_blood_drain IS_READY { use_ability e_blood_drain } ELSE { use_ability e_bite }"
                 ]
             }
         ]
     },
-    "shroomling": {
-        "id": 1004,
-        "name": "Shroomling",
-        "level": 2,
+    "spore_cap": {
+        "id": 1008,
+        "name": "Spore Cap",
+        "level": 4,
         "category": "Normal",
-        "tags": ["tier1", "normal_enemy", "plant"],
+        "tags": ["mid", "plant"],
+        "intro": "A waist-high mushroom swells and sighs as you approach.",
         "stats": {
-            "str": 8,
-            "int": 8,
-            "max_health": 38,
-            "speed": 90,
+            "str": 10,
+            "max_health": 46,
+            "speed": 80,
+            "defense": 4,
+            "exp_reward": 40,
+            "fire_resistance": -50,
+            "staff_resistance": -50
+        },
+        "abilities": [
+            {"ability_id": "e_gnaw", "cooldowns": {"self": 0}},
+            {"ability_id": "e_spore_cloud", "cooldowns": {"self": 4}}
+        ],
+        "loot_table": [
+            {"type": "gold", "chance": 0.85, "min_amount": 2, "max_amount": 6},
+            {"type": "item", "item_id": "antivenom", "chance": 0.3, "min_amount": 1, "max_amount": 1}
+        ],
+        "attack_scripts": [
+            {
+                "activation_condition": "IF SELF",
+                "interruptible": true,
+                "script_lines": [
+                    "IF ABILITY e_spore_cloud IS_READY AND PLAYER NOT HAS_STATUS POISON { use_ability e_spore_cloud } ELSE { use_ability e_gnaw }"
+                ]
+            }
+        ]
+    },
+    "ash_wolf": {
+        "id": 1009,
+        "name": "Ash Wolf",
+        "level": 7,
+        "category": "Normal",
+        "tags": ["late", "beast"],
+        "intro": "A wolf with fur like cooling ash pads out of the smoke.",
+        "stats": {
+            "str": 15,
+            "dex": 14,
+            "max_health": 56,
+            "speed": 135,
             "defense": 3,
-            "exp_reward": 17,
-            "axe_resistance": -50,
-            "fire_resistance": -50
+            "exp_reward": 54,
+            "ice_resistance": -50
         },
         "abilities": [
             {"ability_id": "e_bite", "cooldowns": {"self": 0}},
-            {"ability_id": "e_drowsy_spores", "cooldowns": {"self": 3}}
+            {"ability_id": "e_howl", "cooldowns": {"self": 4}}
         ],
         "loot_table": [
-            {"type": "gold", "chance": 0.9, "min_amount": 2, "max_amount": 6},
-            {"type": "item", "item_id": "herb_of_healing", "chance": 0.2, "min_amount": 1, "max_amount": 1}
+            {"type": "gold", "chance": 0.85, "min_amount": 4, "max_amount": 10},
+            {"type": "item", "item_id": "waybread", "chance": 0.2, "min_amount": 1, "max_amount": 1}
         ],
         "attack_scripts": [
             {
                 "activation_condition": "IF SELF",
                 "interruptible": true,
-                "script_lines": ["use_ability e_drowsy_spores", "use_ability e_bite", "use_ability e_bite"]
+                "script_lines": [
+                    "IF ABILITY e_howl IS_READY AND SELF ALLY_COUNT >= 1 { use_ability e_howl } ELSE { use_ability e_bite }"
+                ]
             }
         ]
     },
-    "lizardman": {
-        "id": 1005,
-        "name": "Lizardman",
-        "level": 3,
+    "dusk_knight": {
+        "id": 1010,
+        "name": "Dusk-Touched Knight",
+        "level": 7,
         "category": "Normal",
-        "tags": ["tier1", "normal_enemy", "humanoid", "lizard"],
+        "tags": ["late", "humanoid", "dusk"],
+        "intro": "A knight in rusted plate. Whatever was inside the armour left long ago; the armour did not.",
         "stats": {
-            "str": 12,
-            "dex": 10,
-            "max_health": 42,
-            "speed": 100,
-            "defense": 5,
-            "exp_reward": 24,
-            "sword_resistance": -50,
-            "ice_resistance": -50
-        },
-        "abilities": [{"ability_id": "e_spear_thrust", "cooldowns": {"self": 0}}],
-        "loot_table": [
-            {"type": "gold", "chance": 0.9, "min_amount": 6, "max_amount": 14},
-            {
-                "type": "item",
-                "item_id": "energizing_pomegranate",
-                "chance": 0.1,
-                "min_amount": 1,
-                "max_amount": 1
-            }
-        ]
-    },
-    "lizardman_chief": {
-        "id": 1101,
-        "name": "Lizardman Chief",
-        "level": 5,
-        "category": "Elite",
-        "tags": ["tier1", "elite_enemy", "humanoid", "lizard"],
-        "stats": {
-            "str": 14,
-            "dex": 11,
-            "max_health": 85,
-            "speed": 105,
-            "defense": 6,
-            "exp_reward": 70,
-            "spear_resistance": -50,
-            "ice_resistance": -50,
-            "lightning_resistance": -50
+            "str": 15,
+            "max_health": 62,
+            "speed": 90,
+            "defense": 8,
+            "exp_reward": 62,
+            "staff_resistance": -50,
+            "lightning_resistance": -50,
+            "light_resistance": -50,
+            "sword_resistance": 40,
+            "dark_resistance": 50
         },
         "abilities": [
-            {"ability_id": "e_spear_thrust", "cooldowns": {"self": 0}},
-            {"ability_id": "e_war_cry", "cooldowns": {"self": 3}}
+            {"ability_id": "e_heavy_slash", "cooldowns": {"self": 0}},
+            {"ability_id": "e_shield_up", "cooldowns": {"self": 3}}
         ],
         "loot_table": [
-            {"type": "gold", "chance": 1.0, "min_amount": 25, "max_amount": 45},
-            {"type": "item", "item_id": "ice_soulstone", "chance": 0.3, "min_amount": 1, "max_amount": 1}
+            {"type": "gold", "chance": 0.85, "min_amount": 8, "max_amount": 18},
+            {"type": "item", "item_id": "hearth_loaf", "chance": 0.1, "min_amount": 1, "max_amount": 1}
         ],
         "attack_scripts": [
             {
                 "activation_condition": "IF SELF",
                 "interruptible": true,
                 "script_lines": [
-                    "IF ABILITY e_war_cry IS_READY AND SELF ALLY_COUNT >= 1 { use_ability e_war_cry } ELSE { use_ability e_spear_thrust }"
+                    "use_ability e_heavy_slash",
+                    "IF ABILITY e_shield_up IS_READY { use_ability e_shield_up } ELSE { use_ability e_heavy_slash }"
                 ]
             }
         ]
     },
-    "bandit_captain": {
-        "id": 1102,
-        "name": "Bandit Captain",
-        "level": 5,
-        "category": "Elite",
-        "tags": ["tier1", "elite_enemy", "humanoid", "bandit"],
+    "cinder_imp": {
+        "id": 1011,
+        "name": "Cinder Imp",
+        "level": 7,
+        "category": "Normal",
+        "tags": ["late", "spirit"],
+        "intro": "A cackling imp of living coal hops from stone to stone.",
         "stats": {
-            "str": 13,
-            "dex": 13,
-            "int": 10,
-            "max_health": 80,
-            "speed": 120,
-            "defense": 5,
-            "exp_reward": 70,
-            "dagger_resistance": -50,
-            "bow_resistance": -50,
-            "wind_resistance": -50
-        },
-        "abilities": [
-            {"ability_id": "e_slash", "cooldowns": {"self": 0}},
-            {"ability_id": "e_shaman_mend", "cooldowns": {"self": 3}}
-        ],
-        "loot_table": [
-            {"type": "gold", "chance": 1.0, "min_amount": 40, "max_amount": 70},
-            {
-                "type": "item",
-                "item_id": "healing_grape_bunch",
-                "chance": 0.25,
-                "min_amount": 1,
-                "max_amount": 1
-            }
-        ],
-        "attack_scripts": [
-            {
-                "activation_condition": "IF SELF",
-                "interruptible": true,
-                "script_lines": [
-                    "IF ABILITY e_shaman_mend IS_READY AND ALL_ALLIES WITH_STAT HP < 50% { use_ability e_shaman_mend } ELSE { use_ability e_slash }"
-                ]
-            }
-        ]
-    },
-    "hellhound": {
-        "id": 1103,
-        "name": "Hellhound",
-        "level": 6,
-        "category": "Elite",
-        "tags": ["tier1", "elite_enemy", "beast"],
-        "stats": {
-            "str": 13,
-            "int": 12,
-            "max_health": 75,
-            "speed": 135,
-            "defense": 4,
-            "exp_reward": 75,
-            "axe_resistance": -50,
+            "str": 8,
+            "int": 14,
+            "max_health": 38,
+            "speed": 130,
+            "defense": 2,
+            "exp_reward": 50,
             "ice_resistance": -50,
             "fire_resistance": 80
         },
+        "abilities": [{"ability_id": "e_fire_spit", "cooldowns": {"self": 0}}],
+        "loot_table": [
+            {"type": "gold", "chance": 0.85, "min_amount": 4, "max_amount": 10},
+            {"type": "item", "item_id": "firepot", "chance": 0.2, "min_amount": 1, "max_amount": 1}
+        ]
+    },
+    "pit_brawler": {
+        "id": 1050,
+        "name": "Pit Brawler",
+        "level": 2,
+        "category": "Special",
+        "tags": ["event", "humanoid"],
+        "intro": "The big man rolls his shoulders and grins. 'Gloves off.'",
+        "stats": {"str": 12, "dex": 10, "max_health": 45, "speed": 100, "defense": 3, "exp_reward": 35},
         "abilities": [
-            {"ability_id": "e_bite", "cooldowns": {"self": 0}},
-            {"ability_id": "e_fire_breath", "cooldowns": {"self": 2}}
+            {"ability_id": "e_slash", "cooldowns": {"self": 0}},
+            {"ability_id": "e_bloat", "cooldowns": {"self": 4}}
+        ],
+        "loot_table": [{"type": "gold", "chance": 0.0, "min_amount": 0, "max_amount": 0}],
+        "attack_scripts": [
+            {
+                "activation_condition": "IF SELF",
+                "interruptible": true,
+                "script_lines": [
+                    "use_ability e_slash",
+                    "IF SELF WITH_STAT HP < 50% AND ABILITY e_bloat IS_READY { use_ability e_bloat } ELSE { use_ability e_slash }"
+                ]
+            }
+        ]
+    },
+    "bandit_chief": {
+        "id": 1101,
+        "name": "Bandit Chief",
+        "level": 5,
+        "category": "Elite",
+        "tags": ["elite", "humanoid", "bandit"],
+        "intro": "The Bandit Chief cracks her knuckles. 'Toll's gone up.'",
+        "stats": {
+            "str": 15,
+            "dex": 13,
+            "max_health": 95,
+            "speed": 115,
+            "defense": 6,
+            "exp_reward": 130,
+            "staff_resistance": -50,
+            "light_resistance": -50
+        },
+        "abilities": [
+            {"ability_id": "e_slash", "cooldowns": {"self": 0}},
+            {"ability_id": "e_pickpocket", "cooldowns": {"self": 3}},
+            {"ability_id": "e_rallying_shout", "cooldowns": {"self": 4}},
+            {"ability_id": "e_bandit_mend", "cooldowns": {"self": 4}}
         ],
         "loot_table": [
-            {"type": "gold", "chance": 1.0, "min_amount": 20, "max_amount": 40},
-            {"type": "item", "item_id": "fire_soulstone", "chance": 0.3, "min_amount": 1, "max_amount": 1}
+            {"type": "gold", "chance": 1.0, "min_amount": 40, "max_amount": 70},
+            {"type": "item", "item_id": "hearth_loaf", "chance": 0.4, "min_amount": 1, "max_amount": 1}
         ],
         "attack_scripts": [
             {
                 "activation_condition": "IF SELF",
                 "interruptible": true,
                 "script_lines": [
-                    "use_ability e_bite",
-                    "IF ABILITY e_fire_breath IS_READY { use_ability e_fire_breath } ELSE { use_ability e_bite }"
+                    "IF ABILITY e_bandit_mend IS_READY AND ALL_ALLIES WITH_STAT HP < 50% { use_ability e_bandit_mend } ELSE IF ABILITY e_rallying_shout IS_READY AND SELF ALLY_COUNT >= 1 { use_ability e_rallying_shout } ELSE { use_ability e_slash }",
+                    "IF ABILITY e_pickpocket IS_READY { use_ability e_pickpocket } ELSE { use_ability e_slash }"
                 ]
             }
         ]
     },
-    "guardian_of_the_first_flame": {
-        "id": 1201,
-        "name": "Guardian of the First Flame",
-        "level": 10,
-        "category": "Boss",
-        "tags": ["tier1", "boss_enemy", "spirit", "fire"],
+    "bog_hag": {
+        "id": 1102,
+        "name": "Bog Hag",
+        "level": 5,
+        "category": "Elite",
+        "tags": ["elite", "humanoid", "dusk"],
+        "intro": "A hag in a cloak of wet moss grins with too many teeth.",
         "stats": {
-            "str": 16,
-            "int": 16,
-            "max_health": 260,
-            "speed": 115,
-            "defense": 7,
-            "exp_reward": 300,
-            "staff_resistance": -50,
-            "ice_resistance": -50,
+            "str": 9,
+            "int": 15,
+            "max_health": 85,
+            "speed": 105,
+            "defense": 4,
+            "exp_reward": 130,
+            "fire_resistance": -50,
             "light_resistance": -50,
-            "fire_resistance": 90
+            "dark_resistance": 50
         },
         "abilities": [
-            {"ability_id": "e_slash", "cooldowns": {"self": 0}},
-            {"ability_id": "e_fire_breath", "cooldowns": {"self": 2}},
-            {"ability_id": "e_ember_shield", "cooldowns": {"self": 4}},
-            {"ability_id": "e_inferno", "cooldowns": {"self": 3}}
+            {"ability_id": "e_life_siphon", "cooldowns": {"self": 0}},
+            {"ability_id": "e_curse", "cooldowns": {"self": 3}},
+            {"ability_id": "e_spore_cloud", "cooldowns": {"self": 4}}
         ],
         "loot_table": [
-            {"type": "gold", "chance": 1.0, "min_amount": 200, "max_amount": 300},
+            {"type": "gold", "chance": 1.0, "min_amount": 30, "max_amount": 55},
+            {"type": "item", "item_id": "bluebell_tonic", "chance": 0.5, "min_amount": 1, "max_amount": 1}
+        ],
+        "attack_scripts": [
             {
-                "type": "item",
-                "item_id": "healing_grape_bunch",
-                "chance": 1.0,
-                "min_amount": 1,
-                "max_amount": 1
+                "activation_condition": "IF SELF",
+                "interruptible": true,
+                "script_lines": [
+                    "IF ABILITY e_curse IS_READY { use_ability e_curse } ELSE { use_ability e_life_siphon }",
+                    "IF ABILITY e_spore_cloud IS_READY AND PLAYER NOT HAS_STATUS POISON { use_ability e_spore_cloud } ELSE { use_ability e_life_siphon }"
+                ]
             }
+        ]
+    },
+    "dusk_hound": {
+        "id": 1103,
+        "name": "Dusk Hound",
+        "level": 6,
+        "category": "Elite",
+        "tags": ["elite", "beast", "dusk"],
+        "intro": "A hound of shadow and smoke. Its eyes are two dying lanterns.",
+        "stats": {
+            "str": 16,
+            "dex": 15,
+            "max_health": 90,
+            "speed": 140,
+            "defense": 4,
+            "exp_reward": 135,
+            "light_resistance": -50,
+            "ice_resistance": -50,
+            "dark_resistance": 50
+        },
+        "abilities": [
+            {"ability_id": "e_bite", "cooldowns": {"self": 0}},
+            {"ability_id": "e_frenzy", "cooldowns": {"self": 5}}
+        ],
+        "loot_table": [
+            {"type": "gold", "chance": 1.0, "min_amount": 25, "max_amount": 45},
+            {"type": "item", "item_id": "sun_lantern", "chance": 0.3, "min_amount": 1, "max_amount": 1}
+        ],
+        "attack_scripts": [
+            {
+                "activation_condition": "IF SELF WITH_STAT HP > 50%",
+                "interruptible": true,
+                "script_lines": ["use_ability e_bite"]
+            },
+            {
+                "activation_condition": "IF SELF WITH_STAT HP <= 50%",
+                "interruptible": true,
+                "script_lines": ["IF ABILITY e_frenzy IS_READY { use_ability e_frenzy } ELSE { use_ability e_bite }"]
+            }
+        ]
+    },
+    "ashgate_warden": {
+        "id": 1201,
+        "name": "The Ashgate Warden",
+        "level": 10,
+        "category": "Boss",
+        "tags": ["boss", "construct", "dusk"],
+        "intro": "Ash falls like snow. The gate's guardian unfolds from the stone, a lantern burning where its face should be.",
+        "stats": {
+            "str": 18,
+            "int": 15,
+            "max_health": 235,
+            "speed": 100,
+            "defense": 8,
+            "exp_reward": 400,
+            "light_resistance": -50,
+            "staff_resistance": -50,
+            "lightning_resistance": -50,
+            "sword_resistance": 30,
+            "dark_resistance": 60
+        },
+        "abilities": [
+            {"ability_id": "e_gate_strike", "cooldowns": {"self": 0}},
+            {"ability_id": "e_tower_wall", "cooldowns": {"self": 4}},
+            {"ability_id": "e_lantern_eater", "cooldowns": {"self": 3}}
+        ],
+        "loot_table": [
+            {"type": "gold", "chance": 1.0, "min_amount": 150, "max_amount": 220},
+            {"type": "item", "item_id": "hearth_loaf", "chance": 1.0, "min_amount": 1, "max_amount": 1}
         ],
         "attack_scripts": [
             {
                 "activation_condition": "IF SELF WITH_STAT HP > 50%",
                 "interruptible": true,
                 "script_lines": [
-                    "use_ability e_slash",
-                    "IF ABILITY e_fire_breath IS_READY { use_ability e_fire_breath } ELSE { use_ability e_slash }"
+                    "use_ability e_gate_strike",
+                    "IF ABILITY e_tower_wall IS_READY { use_ability e_tower_wall } ELSE { use_ability e_gate_strike }"
                 ]
             },
             {
                 "activation_condition": "IF SELF WITH_STAT HP <= 50%",
                 "interruptible": false,
                 "script_lines": [
-                    "IF ABILITY e_ember_shield IS_READY { use_ability e_ember_shield } ELSE { use_ability e_slash }",
-                    "IF ABILITY e_inferno IS_READY { use_ability e_inferno } ELSE { use_ability e_fire_breath }",
-                    "use_ability e_slash"
+                    "IF ABILITY e_lantern_eater IS_READY { use_ability e_lantern_eater } ELSE { use_ability e_gate_strike }",
+                    "use_ability e_gate_strike",
+                    "IF ABILITY e_tower_wall IS_READY { use_ability e_tower_wall } ELSE { use_ability e_gate_strike }"
                 ]
             }
         ]
     },
-    "blotted_viper": {
+    "mother_of_moths": {
         "id": 1202,
-        "name": "Blotted Viper",
+        "name": "Mother of Moths",
         "level": 10,
         "category": "Boss",
-        "tags": ["tier1", "boss_enemy", "beast", "serpent"],
+        "tags": ["boss", "beast", "dusk"],
+        "intro": "The sky over Ashgate is a ceiling of wings. They settle, and become one enormous moth.",
         "stats": {
-            "str": 17,
-            "dex": 14,
-            "max_health": 240,
-            "speed": 125,
-            "defense": 6,
-            "exp_reward": 300,
-            "axe_resistance": -50,
-            "bow_resistance": -50,
-            "fire_resistance": -50
+            "str": 12,
+            "int": 17,
+            "max_health": 210,
+            "speed": 120,
+            "defense": 4,
+            "exp_reward": 400,
+            "fire_resistance": -50,
+            "dark_resistance": 60
         },
         "abilities": [
-            {"ability_id": "e_venom_fang", "cooldowns": {"self": 1}},
-            {"ability_id": "e_constrict", "cooldowns": {"self": 0}},
-            {"ability_id": "e_poison_mist", "cooldowns": {"self": 4}}
+            {"ability_id": "e_moth_kiss", "cooldowns": {"self": 0}},
+            {"ability_id": "e_dust_storm", "cooldowns": {"self": 3}},
+            {"ability_id": "e_blinding_bloom", "cooldowns": {"self": 5}}
         ],
         "loot_table": [
-            {"type": "gold", "chance": 1.0, "min_amount": 200, "max_amount": 300},
-            {"type": "item", "item_id": "herb_of_healing", "chance": 1.0, "min_amount": 2, "max_amount": 3}
+            {"type": "gold", "chance": 1.0, "min_amount": 150, "max_amount": 220},
+            {"type": "item", "item_id": "sun_lantern", "chance": 1.0, "min_amount": 1, "max_amount": 1}
         ],
         "attack_scripts": [
             {
-                "activation_condition": "IF SELF WITH_STAT HP > 40%",
+                "activation_condition": "IF SELF WITH_STAT HP > 50%",
                 "interruptible": true,
                 "script_lines": [
-                    "IF PLAYER NOT HAS_STATUS POISON AND ABILITY e_poison_mist IS_READY { use_ability e_poison_mist } ELSE { use_ability e_constrict }",
-                    "IF ABILITY e_venom_fang IS_READY { use_ability e_venom_fang } ELSE { use_ability e_constrict }"
+                    "use_ability e_moth_kiss",
+                    "IF ABILITY e_dust_storm IS_READY { use_ability e_dust_storm } ELSE { use_ability e_moth_kiss }"
                 ]
             },
             {
-                "activation_condition": "IF SELF WITH_STAT HP <= 40%",
+                "activation_condition": "IF SELF WITH_STAT HP <= 50%",
                 "interruptible": true,
                 "script_lines": [
-                    "WEIGHTED_CHOICE { WEIGHT 60: use_ability e_constrict } { WEIGHT 40: use_ability e_venom_fang }"
+                    "IF ABILITY e_blinding_bloom IS_READY { use_ability e_blinding_bloom } ELSE { use_ability e_moth_kiss }",
+                    "IF ABILITY e_dust_storm IS_READY { use_ability e_dust_storm } ELSE { use_ability e_moth_kiss }"
                 ]
             }
         ]

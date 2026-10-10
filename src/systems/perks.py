@@ -67,6 +67,8 @@ class PerkManager:
         labels = [f"{p['name']} - {p.get('description', '')}" for p in options]
         chosen = options[self.input.choose(f"Level {level}! Choose a perk:", labels)]
         player.perks.append(chosen["perk_id"])
-        for msg in apply_effects(player, [chosen["effect"]], self.loader):
+        from src.data_loader import perk_effects
+
+        for msg in apply_effects(player, perk_effects(chosen), self.loader):
             self.narrator(msg)
         return chosen

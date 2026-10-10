@@ -19,6 +19,7 @@ class Enemy(Character):
     category: str = "Normal"  # Normal | Elite | Boss | Special
     level: int = 1
     intro: str = ""
+    stolen_gold: int = 0
     abilities: list[dict[str, Any]] = field(default_factory=list)
     loot_table: list[dict[str, Any]] = field(default_factory=list)
     attack_scripts: list[dict[str, Any]] = field(default_factory=list)

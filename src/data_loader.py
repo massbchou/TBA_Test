@@ -24,6 +24,11 @@ from src.systems.effects import EFFECTS, REQUIRED_PARAMS
 REQUIREMENT_KEYS = {"gold", "class", "item", "stat", "level"}
 CHOICE_KEYS = {"result_text", "description", "requires", "effects", "choices", "chance", "success", "failure"}
 
+def perk_effects(perk: dict[str, Any]) -> list[dict[str, Any]]:
+    """A perk holds either one ``effect`` or a list of ``effects``."""
+    return list(perk.get("effects", [])) or ([perk["effect"]] if "effect" in perk else [])
+
+
 STATUS_HOOKS = ("on_apply", "on_turn_start", "on_turn_end", "on_damage_taken", "on_expire")
 
 
@@ -49,6 +54,13 @@ class DataLoader:
     def starting_options(self) -> dict[str, dict[str, Any]]:
         """Backwards compatibility alias for starting_classes."""
         return self.starting_classes
+
+    def perk_name(self, perk_id: str) -> str:
+        for perks in self.level_up_perks.values():
+            for perk in perks:
+                if perk.get("perk_id") == perk_id:
+                    return perk.get("name", perk_id)
+        return perk_id
 
     def _read_json(self, path: Path) -> Any:
         if not path.exists():
@@ -109,7 +121,7 @@ class DataLoader:
             growth=dict(data.get("growth", {})),
             basic_attack=data.get("basic_attack", "1.0*STR"),
             basic_attack_type=data.get("basic_attack_type", "PHYSICAL"),
-            derived_formulas=dict(self.settings.get("player", {}).get("derived_stats", {})),
+            derived_formulas={**self.settings.get("player", {}).get("derived_stats", {}), **data.get("derived_stats", {})},
         )
         if "player" in self.settings:
             formula = self.settings["player"].get("exp_formula", "100")
@@ -123,8 +135,10 @@ class DataLoader:
         categories: list[str] | None = None,
         min_level: int | None = None,
         max_level: int | None = None,
+        any_tags: list[str] | None = None,
     ) -> list[str]:
-        """Returns enemy slugs matching all tag, category, and level constraints."""
+        """Returns enemy slugs matching the category and level constraints, all of
+        ``required_tags``, and at least one of ``any_tags``."""
         matched: list[str] = []
         for slug, data in self.enemies.items():
             if categories and data.get("category") not in categories:
@@ -136,10 +150,11 @@ class DataLoader:
             if max_level is not None and lvl > max_level:
                 continue
 
-            if required_tags:
-                enemy_tags = data.get("tags", [])
-                if not all(tag in enemy_tags for tag in required_tags):
-                    continue
+            enemy_tags = data.get("tags", [])
+            if required_tags and not all(tag in enemy_tags for tag in required_tags):
+                continue
+            if any_tags and not any(tag in enemy_tags for tag in any_tags):
+                continue
 
             matched.append(slug)
         return matched
@@ -220,19 +235,27 @@ class DataLoader:
                 if not is_known_stat(stat):
                     diags.append(Diagnostic("error", f"growth stat {stat!r} is not a stat", source=where))
 
-        for stat, formula in self.settings.get("player", {}).get("derived_stats", {}).items():
+        formulas = [("settings", k, f) for k, f in self.settings.get("player", {}).get("derived_stats", {}).items()]
+        formulas += [(f"class:{c}", k, f) for c, d in self.starting_classes.items() for k, f in d.get("derived_stats", {}).items()]
+        for where, stat, formula in formulas:
             error = validate_formula(formula, is_known_stat)
             if error:
-                diags.append(Diagnostic("error", f"derived_stats.{stat}: {error}", source="settings"))
+                diags.append(Diagnostic("error", f"derived_stats.{stat}: {error}", source=where))
 
         # Perks and occurrences
         for tier, perks in self.level_up_perks.items():
             for perk in perks:
                 where = f"perk:{tier}:{perk.get('perk_id')}"
-                diags += self._validate_effects([perk.get("effect", {})], where)
+                diags += self._validate_effects(perk_effects(perk), where)
                 diags += self._validate_requires(perk.get("requires", {}), where)
         for key, occ in self.events.get("occurrences", {}).items():
             diags += self._validate_choices(occ.get("choices", {}), f"occurrence:{key}")
+
+        # Encounter bands must match at least one enemy
+        for band in self.settings.get("combat", {}).get("rules_by_level_range", []):
+            tags = band.get("regular_combat", {}).get("enemy_tags")
+            if tags and not self.filter_enemies(categories=["Normal"], any_tags=tags):
+                diags.append(Diagnostic("error", f"no Normal enemies tagged any of {tags}", source="settings"))
 
         # Event enemy references
         for section in ("preconstructed_ordeals", "boss_events"):

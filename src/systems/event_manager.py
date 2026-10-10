@@ -21,6 +21,8 @@ class EventManager:
         self.data_loader = data_loader
         self.settings = data_loader.settings
         self.rng = rng or get_rng()
+        self._recent_enemies: set[str] = set()
+        self._player = None
 
     def generate_choices(self, game_state: GameState) -> list[Event]:
         """Generates the path choices for the current floor.
@@ -38,6 +40,7 @@ class EventManager:
         if boss_interval > 0 and level % boss_interval == 0:
             return [self._generate_boss_event(level)]
 
+        self._player = game_state.player
         excluded = game_state.recently_offered() | set(game_state.used_once)
         offered: set[str] = set()
         choices: list[Event] = []
@@ -63,6 +66,9 @@ class EventManager:
             choices.append(event)
 
         game_state.remember_offers([e.id for e in choices if isinstance(e, OccurrenceEvent)])
+        self._recent_enemies = {
+            e.enemy_id for c in choices if isinstance(c, CombatEvent) and c.subtype == "Regular" for e in c.encounter
+        }
         return choices
 
     def _build_event(
@@ -82,6 +88,16 @@ class EventManager:
         if event_type == "rest_stop":
             return None if "rest_site" in offered else RestEvent(is_mystery=is_mystery, stock=self._shop_stock())
         return self._generate_regular_combat(level, is_mystery)
+
+    def _selectable_choices(self, occurrence: dict[str, Any]) -> int:
+        """Top-level choices the current player could pick. An event whose only option is
+        'leave' wastes a floor, so it is not offered."""
+        from src.systems.events import unmet_requirement
+
+        choices = occurrence.get("choices", {})
+        if self._player is None:
+            return len(choices)
+        return sum(1 for c in choices.values() if unmet_requirement(self._player, c.get("requires")) is None)
 
     def _shop_stock(self) -> list[str]:
         cfg = self.settings.get("events", {}).get("shop", {})
@@ -106,9 +122,9 @@ class EventManager:
 
         num_enemies = int(weighted_choice(count_weights, rng=self.rng) or 1)
 
-        candidates = self.data_loader.filter_enemies(categories=["Normal"])
-        if not candidates:
-            candidates = list(self.data_loader.enemies.keys())
+        candidates = self._band_candidates(rules, "Normal")
+        fresh = [c for c in candidates if c not in self._recent_enemies]
+        candidates = fresh or candidates  # avoid offering last floor's enemies again when possible
 
         chosen_slugs = self.rng.choices(candidates, k=num_enemies)
         encounter = [self.data_loader.build_enemy(slug) for slug in chosen_slugs]
@@ -123,6 +139,14 @@ class EventManager:
             is_mystery=is_mystery,
         )
 
+    def _band_candidates(self, rules: dict[str, Any] | None, category: str) -> list[str]:
+        """Enemies of a category, narrowed to the band's ``regular_combat.enemy_tags`` (any match) when set."""
+        tags = (rules or {}).get("regular_combat", {}).get("enemy_tags")
+        candidates = self.data_loader.filter_enemies(categories=[category], any_tags=tags)
+        if not candidates:
+            candidates = self.data_loader.filter_enemies(categories=[category])
+        return candidates or list(self.data_loader.enemies.keys())
+
     def _generate_ordeal_combat(self, level: int, is_mystery: bool) -> CombatEvent:
         rules = self._get_combat_rules_for_level(level)
         ordeal_rules = rules.get("ordeal_combat", {}) if rules else {}
@@ -134,9 +158,12 @@ class EventManager:
             weighted_choice({"preconstructed": preconstructed_weight, "random": random_weight}, rng=self.rng) == "preconstructed"
         )
 
-        preconstructed_dict = self.data_loader.events.get("preconstructed_ordeals", {})
-        if use_preconstructed and preconstructed_dict:
-            ordeal_key, ordeal_data = self.rng.choice(list(preconstructed_dict.items()))
+        preconstructed = [
+            (key, data) for key, data in self.data_loader.events.get("preconstructed_ordeals", {}).items()
+            if data.get("min_level", 1) <= level
+        ]
+        if use_preconstructed and preconstructed:
+            ordeal_key, ordeal_data = self.rng.choice(preconstructed)
             encounter = [self.data_loader.build_enemy(slug) for slug in ordeal_data.get("enemies", [])]
             return CombatEvent(
                 event_id=ordeal_key,
@@ -155,11 +182,8 @@ class EventManager:
         num_elites = int(weighted_choice(elite_weights, rng=self.rng) or 1)
         num_normals = int(weighted_choice(normal_weights, rng=self.rng) or 0)
 
-        elite_candidates = self.data_loader.filter_enemies(categories=["Elite"])
-        if not elite_candidates:
-            elite_candidates = self.data_loader.filter_enemies(categories=["Normal"])
-
-        normal_candidates = self.data_loader.filter_enemies(categories=["Normal"])
+        elite_candidates = self.data_loader.filter_enemies(categories=["Elite"]) or self._band_candidates(rules, "Normal")
+        normal_candidates = self._band_candidates(rules, "Normal")
 
         encounter: list[Enemy] = []
         if elite_candidates:
@@ -189,6 +213,7 @@ class EventManager:
             if ("reward" in occ.get("tags", [])) == is_reward
             and key not in excluded
             and occ.get("min_level", 1) <= level
+            and self._selectable_choices(occ) >= 2
         ]
         if not matched:
             return None

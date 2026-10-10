@@ -1,66 +1,92 @@
 {
-    "healing_grape": {
+    "waybread": {
         "id": 301,
-        "name": "Healing Grape",
-        "description": "Restores 40 HP.",
-        "tags": ["consumable", "healing"],
+        "name": "Waybread",
+        "description": "Dense travel bread. Restores 40 HP.",
+        "tags": ["consumable", "shop", "healing"],
+        "price": 18,
         "usable_in_combat": true,
+        "usable_outside_combat": true,
         "action_string": "HEAL SELF 40"
     },
-    "healing_grape_bunch": {
+    "hearth_loaf": {
         "id": 302,
-        "name": "Healing Grape (Bunch)",
-        "description": "Restores 100 HP.",
-        "tags": ["consumable", "healing"],
+        "name": "Hearth Loaf",
+        "description": "A Keeper's festival loaf. Restores 100 HP.",
+        "tags": ["consumable", "shop", "healing"],
+        "price": 50,
         "usable_in_combat": true,
+        "usable_outside_combat": true,
         "action_string": "HEAL SELF 100"
     },
-    "inspiriting_plum": {
+    "bluebell_tonic": {
         "id": 303,
-        "name": "Inspiriting Plum",
-        "description": "Restores 20 Mana.",
-        "tags": ["consumable"],
+        "name": "Bluebell Tonic",
+        "description": "Restores 25 Mana.",
+        "tags": ["consumable", "shop"],
+        "price": 22,
         "usable_in_combat": true,
-        "action_string": "RESTORE SELF MANA 20"
+        "usable_outside_combat": true,
+        "action_string": "RESTORE SELF MANA 25"
     },
-    "energizing_pomegranate": {
+    "bitterroot": {
         "id": 304,
-        "name": "Energizing Pomegranate",
-        "description": "Restores 30 Stamina.",
-        "tags": ["consumable"],
+        "name": "Bitterroot",
+        "description": "Chew it and grimace. Restores 30 Stamina.",
+        "tags": ["consumable", "shop"],
+        "price": 18,
         "usable_in_combat": true,
+        "usable_outside_combat": true,
         "action_string": "RESTORE SELF STAMINA 30"
     },
-    "herb_of_healing": {
+    "antivenom": {
         "id": 305,
-        "name": "Herb of Healing",
-        "description": "Cures poison.",
-        "tags": ["consumable", "cure"],
+        "name": "Antivenom",
+        "description": "Cures poison and burns.",
+        "tags": ["consumable", "shop", "cure"],
+        "price": 12,
         "usable_in_combat": true,
-        "action_string": "CLEANSE SELF POISON"
+        "usable_outside_combat": true,
+        "action_string": "CLEANSE SELF POISON\nCLEANSE SELF BURN"
     },
-    "fire_soulstone": {
+    "firepot": {
         "id": 306,
-        "name": "Fire Soulstone",
-        "description": "Unleashes 30 Fire damage on all foes.",
-        "tags": ["consumable", "fire", "offensive"],
+        "name": "Firepot",
+        "description": "Thrown clay pot of oil. 30 Fire damage to every foe.",
+        "tags": ["consumable", "shop", "offensive"],
+        "price": 35,
         "usable_in_combat": true,
+        "usable_outside_combat": false,
         "action_string": "DAMAGE ALL_ENEMIES 30 FIRE"
     },
-    "ice_soulstone": {
+    "frost_flask": {
         "id": 307,
-        "name": "Ice Soulstone",
-        "description": "Unleashes 30 Ice damage on all foes.",
-        "tags": ["consumable", "ice", "offensive"],
+        "name": "Frost Flask",
+        "description": "Shatters into rime. 30 Ice damage to every foe.",
+        "tags": ["consumable", "shop", "offensive"],
+        "price": 35,
         "usable_in_combat": true,
+        "usable_outside_combat": false,
         "action_string": "DAMAGE ALL_ENEMIES 30 ICE"
     },
-    "lightning_soulstone": {
+    "stormglass": {
         "id": 308,
-        "name": "Lightning Soulstone",
-        "description": "Unleashes 30 Lightning damage on all foes.",
-        "tags": ["consumable", "lightning", "offensive"],
+        "name": "Stormglass",
+        "description": "A jar of trapped lightning. 30 Lightning damage to every foe.",
+        "tags": ["consumable", "shop", "offensive"],
+        "price": 35,
         "usable_in_combat": true,
+        "usable_outside_combat": false,
         "action_string": "DAMAGE ALL_ENEMIES 30 LIGHTNING"
+    },
+    "sun_lantern": {
+        "id": 309,
+        "name": "Sun Lantern",
+        "description": "A Keeper's lantern opened all at once. 35 Light damage to every foe.",
+        "tags": ["consumable", "shop", "offensive"],
+        "price": 45,
+        "usable_in_combat": true,
+        "usable_outside_combat": false,
+        "action_string": "DAMAGE ALL_ENEMIES 35 LIGHT"
     }
 }

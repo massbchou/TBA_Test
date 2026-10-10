@@ -65,7 +65,7 @@ class TestPlayerActions(unittest.TestCase):
         combat = Combat(warrior, SETTINGS, data_loader=self.loader, input_provider=Recording(["Attack"]),
                         rng=random.Random(0), narrator=lambda s: None)
         combat.run([make_enemy(max_health=1, speed=1)])
-        self.assertEqual(menus[0], ["Attack", "Defend", "Technique", "Run"])
+        self.assertEqual(menus[0], ["Attack", "Defend", "Technique", "Bag (empty)", "Run"])
 
     def test_defend_reduces_physical_damage_until_next_turn_ends(self):
         player = make_player(speed=200, con=10)
@@ -111,6 +111,12 @@ class TestPlayerActions(unittest.TestCase):
 
 
 class TestTurnOrder(unittest.TestCase):
+    def test_speed_floor_prevents_lockout(self):
+        player = make_player(speed=100, str=10)
+        combat, _ = make_combat(player, [])
+        player.add_modifier("speed", -500)
+        self.assertEqual(combat._turn_speed(player), 50)
+
     def test_round_length(self):
         battle = Battle(make_player(), [make_enemy()], settings=SETTINGS)
         self.assertEqual(battle.round_length, 100)
@@ -123,10 +129,10 @@ class TestTurnOrder(unittest.TestCase):
         self.assertIs(Combat._next_actor(battle), p)
 
     def test_speed_debuff_changes_cadence(self):
-        loader = _Loader(abilities={"slow": {"name": "Slow", "action_string": "DEBUFF ALL_ENEMIES SPEED 150 99_TURNS"}})
+        loader = _Loader(abilities={"slow": {"name": "Slow", "action_string": "DEBUFF ALL_ENEMIES SPEED 100 99_TURNS"}})
         player = make_player(speed=100, str=10)
         player.abilities = ["slow"]
-        enemy = make_enemy(speed=250, max_health=60, str=0)
+        enemy = make_enemy(speed=200, max_health=60, str=0)  # slowed to 100, exactly its 50% speed floor
         combat, log = make_combat(player, ["Technique", "Slow"] + ["Attack"] * 6, loader)
         self.assertIs(combat.run([enemy]), CombatResult.VICTORY)
         actors = [line[0] for line in log if line[:2] in ("> ", "< ")]

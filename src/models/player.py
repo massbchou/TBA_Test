@@ -65,7 +65,9 @@ class Player(Character):
         for stat, amount in self.growth.items():
             if amount:
                 self.modify_base_stat(stat, amount)
-                changes.append(f"{stat.upper()} {amount:+d}")
+                from src.stats import display_name
+
+                changes.append(f"{display_name(stat)} {amount:+d}")
         return changes
 
     def refill_resources(self) -> None:

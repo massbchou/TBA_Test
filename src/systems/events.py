@@ -71,10 +71,6 @@ class CombatEvent(Event):
         from src.systems.combat import CombatResult
 
         print(f"\n{self.description}")
-        for enemy in self.encounter:
-            intro = getattr(enemy, "intro", "")
-            if intro:
-                print(f"  {intro}")
         return combat_system.run(self.encounter, subtype=self.subtype) is not CombatResult.DEFEAT
 
 
@@ -253,11 +249,19 @@ class Shop:
     """Buy at full price; sell anything with a price at half."""
 
     SELL_RATE = 0.5
+    CHA_DISCOUNT_PER_POINT = 0.02  # each CHA point above 10 takes 2% off, up to 25%
+    MAX_DISCOUNT = 0.25
 
     def __init__(self, stock: list[str], combat_system: Combat):
         self.stock = stock
         self.actions = combat_system.actions
         self.input = combat_system.input
+
+    def buy_price(self, item_id: str, player: Player) -> int:
+        import math
+
+        discount = min(self.MAX_DISCOUNT, max(0.0, (player.get_stat("cha") - 10) * self.CHA_DISCOUNT_PER_POINT))
+        return math.ceil(self.actions[item_id].price * (1 - discount))
 
     def sell_price(self, item_id: str) -> int:
         item = self.actions.get(item_id)
@@ -271,10 +275,11 @@ class Shop:
                 item = self.actions.get(item_id)
                 if item is None:
                     continue
-                if player.gold >= item.price:
-                    options.append((f"Buy {item.name} ({item.price}g) - {item.description}", "buy", item_id))
+                price = self.buy_price(item_id, player)
+                if player.gold >= price:
+                    options.append((f"Buy {item.name} ({price}g) - {item.description}", "buy", item_id))
                 else:
-                    print(f"  (locked) Buy {item.name} - {item.price}g")
+                    print(f"  (locked) Buy {item.name} - {price}g")
             for item_id, qty in player.inventory.items():
                 price = self.sell_price(item_id)
                 if price > 0:
@@ -285,7 +290,7 @@ class Shop:
                 return
             name = self.actions[item_id].name
             if kind == "buy":
-                player.gold -= self.actions[item_id].price
+                player.gold -= self.buy_price(item_id, player)
                 player.add_item(item_id)
                 print(f"You buy a {name}. (Gold: {player.gold})")
             else:

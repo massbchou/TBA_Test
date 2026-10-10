@@ -36,7 +36,9 @@ class Camp:
             options.append("Check your character")
             if self.save is not None:
                 options.append("Save and quit")
-            choice = options[self.input.choose("Camp:", options)]
+            p = state.player
+            prompt = f"Camp (HP {p.health}/{int(p.get_stat('max_health'))}, Gold {p.gold}):"
+            choice = options[self.input.choose(prompt, options)]
             if choice.startswith("Continue"):
                 return CONTINUE
             if choice.startswith("Use"):
@@ -84,5 +86,7 @@ class Camp:
             lines.append("Bag: " + ", ".join(f"{self.actions[i].name if i in self.actions else i} x{q}"
                                             for i, q in p.inventory.items()))
         if p.perks:
-            lines.append("Perks: " + ", ".join(p.perks))
+            loader = self.combat.data_loader
+            names = [loader.perk_name(pid) for pid in p.perks] if loader else p.perks
+            lines.append("Perks: " + ", ".join(names))
         return "\n".join(lines)

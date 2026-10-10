@@ -1,154 +1,91 @@
 {
     "Warrior": {
-        "description": "A disgraced knight from Cobbleston. Sword and spear; sturdy and direct.",
+        "description": "A sellsword from Brackenford's ferry guard. Sword; Sunder a foe, then Heavy Blow.",
         "level": 1,
         "stats": {
             "str": 16,
-            "dex": 11,
+            "dex": 10,
             "con": 15,
-            "int": 7,
+            "int": 8,
             "wis": 9,
-            "cha": 9,
+            "cha": 10,
             "defense": 6,
             "max_health": 130,
-            "speed": 110
-        },
-        "basic_attack": "1.0*STR",
-        "abilities": ["level_slash", "thousand_spears", "abide"],
-        "spells": [],
-        "starting_items": {"healing_grape": 2}
-    },
-    "Hunter": {
-        "description": "A huntress of the S'warkii woods. Bow and axe; precise and quick.",
-        "level": 1,
-        "stats": {
-            "str": 12,
-            "dex": 16,
-            "con": 12,
-            "int": 9,
-            "wis": 11,
-            "cha": 9,
-            "defense": 4,
-            "max_health": 110,
-            "speed": 125
-        },
-        "basic_attack": "1.0*DEX",
-        "abilities": ["rain_of_arrows", "true_strike", "leghold_trap"],
-        "spells": [],
-        "starting_items": {"healing_grape": 2}
-    },
-    "Cleric": {
-        "description": "A sister of the Sacred Flame from Flamesgrace. Staff and light; heals.",
-        "level": 1,
-        "stats": {
-            "str": 8,
-            "dex": 9,
-            "con": 11,
-            "int": 12,
-            "wis": 16,
-            "cha": 12,
-            "defense": 3,
-            "max_health": 100,
             "speed": 105
         },
-        "basic_attack": "0.8*STR",
-        "abilities": [],
-        "spells": ["heal_wounds", "holy_light", "sheltering_veil"],
-        "starting_items": {"healing_grape": 1, "inspiriting_plum": 2}
-    },
-    "Scholar": {
-        "description": "A royal tutor from Atlasdam. Masters fire, ice and lightning.",
-        "level": 1,
-        "stats": {
-            "str": 8,
-            "dex": 10,
-            "con": 9,
-            "int": 17,
-            "wis": 13,
-            "cha": 10,
-            "defense": 2,
-            "max_health": 90,
-            "speed": 110
-        },
-        "basic_attack": "0.8*STR",
-        "abilities": [],
-        "spells": ["fireball", "icicle", "lightning_bolt"],
-        "starting_items": {"healing_grape": 1, "inspiriting_plum": 2}
-    },
-    "Merchant": {
-        "description": "A sharp-eyed trader from Rippletide. Spear and wind; well supplied.",
-        "level": 1,
-        "stats": {
-            "str": 12,
-            "dex": 12,
-            "con": 12,
-            "int": 12,
-            "wis": 10,
-            "cha": 14,
-            "defense": 4,
-            "max_health": 105,
-            "speed": 115
-        },
         "basic_attack": "1.0*STR",
-        "abilities": ["rest"],
-        "spells": ["tradewinds"],
-        "starting_items": {"healing_grape": 3, "energizing_pomegranate": 1, "fire_soulstone": 1, "ice_soulstone": 1}
-    },
-    "Thief": {
-        "description": "A wanted thief out of Bolderfall. Dagger and fire; fast and dirty.",
-        "level": 1,
-        "stats": {
-            "str": 11,
-            "dex": 16,
-            "con": 11,
-            "int": 10,
-            "wis": 9,
-            "cha": 11,
-            "defense": 3,
-            "max_health": 100,
-            "speed": 145
-        },
-        "basic_attack": "1.0*DEX",
-        "abilities": ["wildfire", "shackle_foe", "hp_thief"],
+        "basic_attack_type": "SWORD",
+        "growth": {"max_health": 12, "str": 2, "con": 1, "defense": 1},
+        "abilities": ["sunder", "heavy_blow", "cleave", "rally"],
         "spells": [],
-        "starting_items": {"healing_grape": 2}
+        "starting_items": {"waybread": 2},
+        "gold": 10
     },
-    "Apothecary": {
-        "description": "A village healer from Clearbrook. Axe-wielding and self-sufficient.",
+    "Martial Artist": {
+        "description": "A Thornwick fight-pit champion. Fast fists; Mark a foe, then finish it.",
         "level": 1,
         "stats": {
             "str": 13,
-            "dex": 10,
-            "con": 14,
-            "int": 10,
-            "wis": 12,
-            "cha": 11,
-            "defense": 5,
-            "max_health": 120,
-            "speed": 100
-        },
-        "basic_attack": "1.0*STR",
-        "abilities": ["first_aid", "amputation", "rehabilitate"],
-        "spells": [],
-        "starting_items": {"healing_grape": 2, "herb_of_healing": 2}
-    },
-    "Dancer": {
-        "description": "A dancer from Sunshade with a vendetta. Dagger and dark magic.",
-        "level": 1,
-        "stats": {
-            "str": 10,
-            "dex": 13,
-            "con": 10,
-            "int": 11,
-            "wis": 10,
-            "cha": 16,
-            "defense": 3,
-            "max_health": 95,
-            "speed": 130
+            "dex": 16,
+            "con": 12,
+            "int": 8,
+            "wis": 11,
+            "cha": 10,
+            "defense": 4,
+            "max_health": 110,
+            "speed": 135
         },
         "basic_attack": "1.0*DEX",
-        "abilities": ["lion_dance"],
-        "spells": ["night_ode", "moonlight_waltz"],
-        "starting_items": {"healing_grape": 2}
+        "basic_attack_type": "PHYSICAL",
+        "growth": {"max_health": 9, "dex": 2, "str": 1, "speed": 2},
+        "abilities": ["pressure_point", "finishing_strike", "flurry", "drain_palm"],
+        "spells": [],
+        "starting_items": {"waybread": 2, "bitterroot": 1},
+        "gold": 10
+    },
+    "Priest": {
+        "description": "A Keeper-trained healer from Cinderhold. Light and staff; outlasts anything.",
+        "level": 1,
+        "stats": {
+            "str": 11,
+            "dex": 9,
+            "con": 12,
+            "int": 10,
+            "wis": 16,
+            "cha": 12,
+            "defense": 4,
+            "max_health": 110,
+            "speed": 105
+        },
+        "basic_attack": "1.0*STR",
+        "basic_attack_type": "STAFF",
+        "derived_stats": {"max_mana": "20 + 5 * (wis - 10)"},
+        "growth": {"max_health": 9, "wis": 2, "con": 1, "str": 1},
+        "abilities": ["rebuke"],
+        "spells": ["smite", "mend", "renewal"],
+        "starting_items": {"waybread": 1, "bluebell_tonic": 1},
+        "gold": 10
+    },
+    "Mage": {
+        "description": "A Greyhallow scholar. Fire, ice and lightning; Siphon keeps the mana flowing.",
+        "level": 1,
+        "stats": {
+            "str": 7,
+            "dex": 10,
+            "con": 10,
+            "int": 17,
+            "wis": 13,
+            "cha": 11,
+            "defense": 3,
+            "max_health": 95,
+            "speed": 110
+        },
+        "basic_attack": "0.8*STR+INT/4",
+        "basic_attack_type": "STAFF",
+        "growth": {"max_health": 8, "int": 2, "wis": 1},
+        "abilities": [],
+        "spells": ["firebolt", "frost_lance", "spark_storm", "siphon"],
+        "starting_items": {"waybread": 2, "bluebell_tonic": 1},
+        "gold": 10
     }
 }

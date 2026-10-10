@@ -126,7 +126,9 @@ class Battle:
                 self.narrate(f"  {char.name}'s {item.name} wears off.")
                 self.run_status_hook(char, item, "on_expire")
             else:
-                label = f"{item.stat.upper()} {'boost' if item.amount >= 0 else 'penalty'}"
+                from src.stats import display_name
+
+                label = f"{display_name(item.stat)} {'boost' if item.amount >= 0 else 'penalty'}"
                 if label not in faded:
                     faded.append(label)
         if faded:
