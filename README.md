@@ -10,6 +10,10 @@ Requires Python 3.10+.
 # Run the game
 python3 main.py
 
+# Reproducible / unattended runs
+python3 main.py --seed 42          # same seed, same run
+python3 main.py --auto --seed 1    # always picks the first option (demo / smoke test)
+
 # Run test suite
 python3 -m unittest discover -s tests -v
 # or with pytest:
@@ -31,26 +35,61 @@ textrogue/
 │
 ├── data/                       # Authoritative JSON content dictionaries
 │   ├── abilities.json          # Physical techniques and stamina abilities
-│   ├── enemies.json            # Enemy archetypes, stats, loot tables
+│   ├── enemies.json            # Enemy archetypes, stats, loot tables, attack scripts
 │   ├── events.json             # Occurrences, ordeals, boss encounters
+│   ├── items.json              # Consumable items (action strings)
 │   ├── level_up_perks.json     # Tiered level-up bonuses
 │   ├── spells.json             # Magical mana spells
-│   └── starting_classes.json   # Starting classes (Warrior, Rogue)
+│   ├── starting_classes.json   # Starting classes, kits and starting items
+│   └── statuses.json           # Status effects and their hooks
 │
 ├── saves/                      # Local game saves (gitignored)
 │
 ├── src/                        # Core game engine
-│   ├── models/                 # Pure data models (Character, Player, Enemy)
+│   ├── models/                 # Data models (Character, Player, Enemy, StatusDef)
+│   ├── io/                     # InputProvider: console, scripted (tests), auto
 │   ├── systems/                # Game logic systems
-│   │   ├── combat.py           # Speed-based continuous-time combat engine
+│   │   ├── actions/            # Action DSL: lexer, parser, targeting, commands, delays
+│   │   ├── ai/                 # Attack Script parser and AI target policies
+│   │   ├── action_orchestrator.py # Entry point for executing any action
+│   │   ├── ai_controller.py    # Enemy script selection and execution
+│   │   ├── battle.py           # Shared combat state: sides, clock, log, status hooks
+│   │   ├── combat.py           # Turn loop, player menu, rewards
+│   │   ├── effects.py          # Permanent effects for occurrences and perks
+│   │   ├── perks.py            # Level-up perk drawing
 │   │   ├── event_manager.py    # Procedural floor path generator
-│   │   ├── events.py           # Combat, Occurrence, and Rest events
-│   │   ├── action_orchestrator.py # Action DSL orchestrator interface
-│   │   └── ai_controller.py    # Enemy AI script controller interface
-│   ├── data_loader.py          # Centralized data loader & model factories
-│   ├── formula.py              # Safe recursive-descent math parser
+│   │   └── events.py           # Combat, Occurrence, and Rest events
+│   ├── data_loader.py          # Data loading, model factories, validate()
+│   ├── formula.py              # Safe math parser with dice support
+│   ├── rng.py                  # Shared seedable RNG
+│   ├── stats.py                # Canonical stat names and DSL aliases
 │   ├── game_state.py           # Run session state
 │   └── utils.py                # Dice rolling, weighted random selection
 │
 └── tests/                      # Unit test suite
 ```
+
+## Adding Content
+
+Content is data-only. After editing JSON, run the test suite: `tests/test_data_integrity.py`
+fails on any parse error, dangling reference, or unknown effect type.
+
+| To add… | Edit | Notes |
+|:---|:---|:---|
+| Technique / spell | `data/abilities.json` / `data/spells.json` | `action_string` per [docs/action_system.md](docs/action_system.md); `costs` in stamina/mana |
+| Item | `data/items.json` | `action_string` + `usable_in_combat`; reference by slug in loot tables and `starting_items` |
+| Status effect | `data/statuses.json` | `stacking` + `hooks` (action strings run with the bearer as `SELF`) |
+| Enemy behaviour | `attack_scripts` in `data/enemies.json` | Syntax in [docs/ai_scripts.md](docs/ai_scripts.md) |
+| Occurrence | `data/events.json` | Choices hold `effects` lists or nested `choices` |
+| Perk | `data/level_up_perks.json` | `tierN` pools; `repeatable: false` for one-time perks |
+
+To add a new *kind* of mechanic, register one handler:
+
+| New… | Register with | In |
+|:---|:---|:---|
+| Command verb | `@register_command("NAME", params)` | `src/systems/actions/commands.py` |
+| Target filter | `@register_filter("NAME", arity)` | `src/systems/actions/filters.py` |
+| Predefined action | `@register_predefined("name")` | `src/systems/actions/predefined.py` |
+| Occurrence/perk effect | `@register_effect("name", required)` | `src/systems/effects.py` |
+| AI target policy | `@register_policy("name")` | `src/systems/ai/policy.py` |
+

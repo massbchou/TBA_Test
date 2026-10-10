@@ -28,6 +28,8 @@ The primary verb of the line, defining the core effect.
 | DEBUFF | DEBUFF \[Target\] \[Stat\] \[Amount\] \[Duration\] | Temporarily decreases a stat. Functionally identical to BUFF with a negative amount. |
 | APPLY | APPLY \[Target\] \[Status Name\] \[Duration\] | Applies a named status effect. **Status Name** is a string (e.g., POISON). **Duration** is how long it lasts. |
 | SET | SET \[Target\] \[Var Name\] \[Value\] \[Duration\] | Sets a custom variable on a target. **Var Name** is a string. **Value** can be a number, string, or boolean. **Duration** is optional; if omitted, the variable is permanent until removed. |
+| RESTORE | RESTORE \[Target\] \[Resource\] \[Amount\] | Refills a resource (STAMINA or MANA) up to its maximum. Characters without that resource are unaffected. |
+| CLEANSE | CLEANSE \[Target\] \[Status Name \| ALL\_DEBUFFS\] | Removes a named status. ALL\_DEBUFFS removes every status whose definition is tagged `debuff`, plus all negative stat modifiers. |
 
 ### **3\. Targeting Phrase**
 
@@ -46,7 +48,7 @@ These keywords establish the initial pool of potential targets.
 | ALL\_TARGETS\_LINE | ALL\_TARGETS\_LINE\<L\> | References all targets from a specific previous line L. Example: ALL\_TARGETS\_LINE2. |
 | PREVIOUS\_TARGETS | PREVIOUS\_TARGETS | A convenient alias for ALL\_TARGETS\_LINE\<L-1\>, referencing all targets from the immediately preceding line. |
 | ALL\_TARGETS\_SO\_FAR | ALL\_TARGETS\_SO\_FAR | References every unique character targeted by any previous line in this action string. |
-| **Positional** | \[Position\] \[Target\] | Selects based on battlefield position relative to a specific target. **Position** can be LEFT\_OF, RIGHT\_OF, ADJACENT\_TO. **Target** must be a specific reference. Example: ADJACENT\_TO SPECIFIC\_TARGET target1.1. |
+| **Positional** | \[Position\] \[Target\] | Selects based on battlefield position relative to a specific target. **Position** can be LEFT\_OF, RIGHT\_OF, ADJACENT\_TO. **Target** must be a specific reference. Example: ADJACENT\_TO SPECIFIC\_TARGET target1.1. *Not yet supported: there is no battlefield position model, so the parser rejects these with an `unsupported` error.* |
 
 #### **3.2. Logical Filters**
 
@@ -69,6 +71,75 @@ The arguments that provide details for commands (e.g., damage amount, duration).
 | **Damage Type** | String constant | PHYSICAL, FIRE, ICE, POISON, HOLY, DARK |
 | **Stat Name** | String constant | STR, DEX, CON, INT, WIS, CHA, DEFENSE, SPEED |
 | **Duration** | Number \+ Unit | 3\_TURNS, 1d3\_ROUNDS |
+
+### **5\. Engine Semantics**
+
+These rules define how the engine (`src/systems/actions/`) interprets the syntax above. They are covered by the test suite.
+
+**Grammar**
+
+```
+line      := [DELAY mode unit amount] [IF condition] COMMAND target params*
+target    := selector [CHOICE|RANDOM] [filters] [CHOICE|RANDOM]
+filters   := filter ((AND|OR) filter)* , with NOT and ( ) allowed; precedence NOT > AND > OR
+condition := clause ((AND|OR) clause)* , with NOT and ( ) allowed
+clause    := target | LAST_ACTION <action filters> | ABILITY <id> IS_READY
+```
+
+* **Parameters are single whitespace-free tokens.** `1.5*STR` and `2d10+INT` are valid; `1.5 * STR` is not. Each filter has a fixed number of arguments (for example, `WITH_STAT` takes 3), which is how the parser knows where the targeting phrase ends and the parameters begin.
+* **Chaining clauses.** An `AND` or `OR` followed by a subject keyword (`SELF`, `PLAYER`, `LAST_ACTOR`, `LAST_ACTION`, `ABILITY`, a back-reference, or a base selector) starts a new clause. Otherwise it joins filters inside the current clause. `SELF WITH_TAG a AND WITH_TAG b` is one clause; `LAST_ACTOR IS_PLAYER AND LAST_ACTION ACTION_HAS_TAG spell` is two.
+* **Line numbers** (for `SPECIFIC_TARGET` and `ALL_TARGETS_LINE`) count non-blank, non-comment lines from 1. Malformed lines still take a number. `#` starts a comment.
+* **Malformed lines** are dropped with a diagnostic when data loads (see `DataLoader.validate()`). A line that fails at runtime, for example by dividing by zero, is skipped with a warning.
+
+**Amounts.** A token is resolved as an integer first, then as a **range** if it exactly matches `low-high` (e.g. `20-30`, rolled uniformly), and otherwise as a **formula**. To subtract numbers, use a formula such as `(30-20)`. Formulas support `+ - * / **`, parentheses, dice atoms (`2d10`, rolled per target), stats of the caster (case-insensitive, with aliases `HP`, `MAX_HP`, `hp_percentage`, `STAMINA`, `MANA`), and `PREVIOUS_DAMAGE_DEALT` (the total from the most recent `DAMAGE` line in this action). Results are floored to integers.
+
+**Targeting.** The candidate pool is built first, then filters are applied, then the quantity is selected.
+
+* Groups are relative to the caster. `ALLY` includes the caster.
+* Dead characters are never targeted.
+* Selection never picks the same character twice. If the pool is no larger than the quantity, every character in it is taken.
+* When no mode is given, the mode is `RANDOM`.
+* With `CHOICE`, the player is prompted. An AI caster instead applies a policy chosen by verb, which an action can override with an `"ai_target"` field: `HEAL` targets the lowest health %; `DAMAGE`, `DEBUFF` and `APPLY` target the lowest current HP; other verbs target the caster first.
+
+**Conditions.** A target clause is true when at least one character survives its filters; quantity and mode are ignored. `WITH_STAT` falls back to the character's variables when the name is not a stat. A missing variable compares as null, so only `!=` can be true against it. Every action automatically gets a tag for where it was defined: `technique`, `spell`, `item`, or `basic` (the built-in Attack, Defend and Run).
+
+**Durations and cooldowns.** All `N_TURNS` timers follow one rule:
+
+* The timer belongs to the character it affects (the bearer).
+* It counts down at the end of the bearer's turn.
+* It does not count down during the turn in which it was applied.
+* It expires when it reaches 0.
+
+So `BUFF SELF DEFENSE 10 1_TURN` lasts through the enemies' actions until the end of the caster's next turn.
+
+`ROUNDS` and `TIME_UNITS` timers use the combat clock instead. One round is `round_time_units / reference_speed` (12500 / 125 = 100) time units.
+
+Singular and plural units (`1_TURN`, `3_TURNS`) and dice (`1d3_ROUNDS`) are accepted. Combat-scoped state is cleared when combat ends; only variables set without a duration persist.
+
+**DELAY.**
+
+* `DELAY … TURNS N` fires at the start of the caster's N-th later turn, before status effects tick and before the caster acts. The caster then still takes that turn.
+* `ROUNDS` and `TIME_UNITS` delays fire when the clock reaches their due time.
+* The line's `IF` condition and its targets are evaluated when it fires, not when it is queued.
+* `BLOCKING` resumes the remaining lines right after the delayed line fires. `NONBLOCKING` queues the line and continues immediately.
+* If the caster dies, its pending delayed lines are cancelled.
+
+**Damage.** Each hit is resolved in this order:
+
+1. Evaluate the amount.
+2. Apply the `<type>_resistance` stat as a percentage. Resistance is clamped to the range −100 to 90.
+3. Subtract `DEFENSE`. This step applies to `PHYSICAL` damage only.
+4. Deal a minimum of 1 damage for any positive hit.
+
+**Statuses** are defined in `data/statuses.json` with:
+
+* `stacking`: `refresh`, `stack` or `ignore`.
+* `tags`.
+* `hooks`: action strings run with the bearer as `SELF`, once per stack. The available hooks are `on_apply`, `on_turn_start`, `on_turn_end`, `on_damage_taken` and `on_expire`.
+
+Applying a status name that has no definition is allowed; it acts as a plain marker (e.g. `ritual_mark`).
+
+**Predefined Actions** are referenced from data as `"predefined_action": {"name": "...", "params": {...}}` and implemented with `@register_predefined`. New verbs and filters are added with `@register_command` and `@register_filter`.
 
 ### **Comprehensive Examples**
 
